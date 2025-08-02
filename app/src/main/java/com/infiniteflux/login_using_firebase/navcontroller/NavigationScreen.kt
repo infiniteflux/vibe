@@ -12,16 +12,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.screens.chat.AddMemberScreen
 import com.infiniteflux.login_using_firebase.screens.chat.ChatScreen
 import com.infiniteflux.login_using_firebase.sharedComponents.BottomNavigationBar
 import com.infiniteflux.login_using_firebase.screens.event.EventDetailsScreen
 import com.infiniteflux.login_using_firebase.screens.event.EventsScreen
 import com.infiniteflux.login_using_firebase.screens.chat.GroupChatScreen
+import com.infiniteflux.login_using_firebase.screens.chat.GroupInfoScreen
 import com.infiniteflux.login_using_firebase.screens.discover.HomeScreen
 import com.infiniteflux.login_using_firebase.screens.login.LoginScreen
 import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
-import com.infiniteflux.login_using_firebase.viewmode.ChatViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
@@ -111,9 +113,30 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     )
                 }
             }
+            composable(
+                route = "${AppRoutes.GROUP_INFO}/{groupId}",
+                arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId")
+                if (groupId != null) {
+                    GroupInfoScreen(navController = navController, groupId = groupId, viewModel = chatViewModel)
+                }
+            }
+
+            composable(
+                route = "${AppRoutes.ADD_MEMBER_TO_GROUP}/{groupId}",
+                arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val groupId = backStackEntry.arguments?.getString("groupId")
+                if (groupId != null) {
+                    AddMemberScreen(navController = navController, groupId = groupId, viewModel = chatViewModel)
+                }
+            }
+
             composable(AppRoutes.PROFILE) {
                 ProfileScreen(navController =navController, viewModel = profileViewModel)
             }
+
         }
     }
 }

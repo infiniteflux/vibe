@@ -12,7 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.infiniteflux.login_using_firebase.navcontroller.NavigationScreen
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
-import com.infiniteflux.login_using_firebase.viewmode.ChatViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
@@ -26,6 +26,8 @@ object AppRoutes {
     const val EVENT_DETAILS = "event_details" // Base route for details
     const val CHATS = "chats"
     const val PROFILE = "profile"
+    const val GROUP_INFO = "group_info"
+    const val ADD_MEMBER_TO_GROUP = "add_member_to_group"
 }
 
 class MainActivity : ComponentActivity() {

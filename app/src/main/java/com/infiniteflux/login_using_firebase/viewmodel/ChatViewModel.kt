@@ -1,7 +1,9 @@
-package com.infiniteflux.login_using_firebase.viewmode
+package com.infiniteflux.login_using_firebase.viewmodel
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ServerTimestamp // <-- 1. Import ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
@@ -51,6 +53,31 @@ class ChatViewModel : ViewModel() {
     // --- State for the Chat Screen ---
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
+
+    // --- 2. State to hold all users in the app ---
+    private val _allUsers = MutableStateFlow<List<User>>(emptyList())
+    val allUsers: StateFlow<List<User>> = _allUsers
+
+    // --- 3. NEW FUNCTION: Fetch all users from the 'users' collection ---
+    fun fetchAllUsers() {
+        db.collection("users")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                _allUsers.value = snapshots.documents.mapNotNull {
+                    it.toObject(User::class.java)?.copy(id = it.id)
+                }
+            }
+    }
+
+    // --- 4. NEW FUNCTION: Add a user to a group's member list ---
+    fun addMemberToGroup(groupId: String, userId: String) {
+        if (groupId.isBlank() || userId.isBlank()) return
+
+        val groupRef = db.collection("groups").document(groupId)
+        // Use FieldValue.arrayUnion to safely add a new member without creating duplicates
+        groupRef.update("memberIds", FieldValue.arrayUnion(userId))
+    }
+
 
     fun createGroup(groupName: String, relatedEvent: String) {
         if (currentUserId == null || groupName.isBlank()) return

@@ -24,9 +24,10 @@ import androidx.compose.ui.unit.max
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
-import com.infiniteflux.login_using_firebase.viewmode.ChatViewModel
-import com.infiniteflux.login_using_firebase.viewmode.Message
+import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.Message
 
 // IMPORTANT: Make sure you are importing the new data class and ViewModel
 
@@ -77,7 +78,7 @@ fun GroupChatScreen(
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                 }
                 Text(groupName, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                IconButton(onClick = { /* TODO: Show group info */ }) {
+                IconButton(onClick = { navController.navigate("${AppRoutes.GROUP_INFO}/$groupId") }) {
                     Icon(Icons.Default.Info, contentDescription = "Group Info")
                 }
             }
