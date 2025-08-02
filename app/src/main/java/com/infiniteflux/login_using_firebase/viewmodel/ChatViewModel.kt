@@ -52,6 +52,24 @@ class ChatViewModel : ViewModel() {
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages
 
+    fun createGroup(groupName: String, relatedEvent: String) {
+        if (currentUserId == null || groupName.isBlank()) return
+
+        // Create a new Group object
+        val newGroup = Group(
+            name = groupName,
+            relatedEvent = relatedEvent,
+            // Add the creator as the first member
+            memberIds = listOf(currentUserId),
+            // You can set a default avatar URL
+            groupAvatarUrl = "https://avatars.githubusercontent.com/u/147044141?s=400&u=0848775e883324ec1bd028ca3a7bc3ded25a0f18&v=4"
+        )
+
+        // Add the new group to the 'groups' collection in Firestore
+        db.collection("groups").add(newGroup)
+        // You can add .addOnSuccessListener and .addOnFailureListener here for feedback
+    }
+
     fun fetchUserGroups() {
         if (currentUserId == null) return
 

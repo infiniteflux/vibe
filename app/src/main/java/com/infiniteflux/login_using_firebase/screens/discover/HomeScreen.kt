@@ -1,6 +1,7 @@
 package com.infiniteflux.login_using_firebase.screens.discover
 
 
+import android.service.autofill.OnClickAction
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import androidx.compose.foundation.Image
@@ -56,7 +57,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
         Spacer(modifier = Modifier.height(24.dp))
         TrendingEventsSection(navController)
         Spacer(modifier = Modifier.height(24.dp))
-        QuickActionsSection()
+        QuickActionsSection(navController)
         Spacer(modifier = Modifier.height(24.dp))
         StaySafeSection()
     }
@@ -221,7 +222,7 @@ fun TrendingEventCard() {
 
 
 @Composable
-fun QuickActionsSection() {
+fun QuickActionsSection(navController: NavController) {
     Column {
         Text(
             text = "⚡ Quick Actions",
@@ -232,15 +233,15 @@ fun QuickActionsSection() {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            QuickActionCard("Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
-            QuickActionCard("Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
-            QuickActionCard("Connections", Icons.Default.Favorite, Color(0xFFE91E63))
+            QuickActionCard(onClickAction ={navController.navigate(AppRoutes.EVENTS)},"Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
+            QuickActionCard(onClickAction = {navController.navigate(AppRoutes.CHATS)},"Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
+            QuickActionCard(onClickAction = {navController.navigate(AppRoutes.PROFILE)},"Connections", Icons.Default.Favorite, Color(0xFFE91E63))
         }
     }
 }
 
 @Composable
-fun QuickActionCard(label: String, icon: ImageVector, iconColor: Color) {
+fun QuickActionCard(onClickAction: () -> Unit,label: String, icon: ImageVector, iconColor: Color) {
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -253,7 +254,15 @@ fun QuickActionCard(label: String, icon: ImageVector, iconColor: Color) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Icon(imageVector = icon, contentDescription = label, tint = iconColor, modifier = Modifier.size(32.dp))
+            IconButton(onClick = onClickAction)
+            {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = iconColor,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = label, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         }
