@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources  xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.Login_Using_Firebase" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.vibe" parent="android:Theme.Material.Light.NoActionBar" />
+
+
+</resources>
+
+
