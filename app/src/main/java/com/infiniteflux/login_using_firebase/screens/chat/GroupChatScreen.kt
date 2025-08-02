@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,6 +62,7 @@ fun GroupChatScreen(
     // --- CHANGE 3: Collect the live list of messages and the current user's ID ---
     val messages by viewModel.messages.collectAsState()
     val currentUserId = viewModel.currentUserId // Assuming you've exposed this from your ViewModel
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Scaffold(
         topBar = {
@@ -89,6 +91,7 @@ fun GroupChatScreen(
                     // Assuming "You" as the sender name for now. In a real app, you'd fetch the user's name.
                     viewModel.sendMessage(groupId, messageText, "You")
                     messageText = "" // Clear the input field
+                    keyboardController?.hide()
                 }
             )
         }
