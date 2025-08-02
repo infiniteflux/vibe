@@ -24,10 +24,13 @@ import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
 import com.infiniteflux.login_using_firebase.viewmode.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 
 @Composable
 fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel,
-                     chatViewModel: ChatViewModel, eventsViewModel: EventsViewModel) {
+                     chatViewModel: ChatViewModel, eventsViewModel: EventsViewModel,
+                     profileViewModel: ProfileViewModel
+) {
     val navController = rememberNavController()
 
     // This state will help us determine the current screen
@@ -109,7 +112,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 }
             }
             composable(AppRoutes.PROFILE) {
-                ProfileScreen()
+                ProfileScreen(navController =navController, viewModel = profileViewModel)
             }
         }
     }

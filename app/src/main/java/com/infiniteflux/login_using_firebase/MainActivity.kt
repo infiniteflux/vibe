@@ -15,6 +15,7 @@ import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmode.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 
 object AppRoutes {
     const val CHAT_GROUP_DETAILS = "chat_group_details"
@@ -37,11 +38,13 @@ class MainActivity : ComponentActivity() {
                 val authViewModel: AuthViewModel = viewModel()
                 val eventsViewModel: EventsViewModel = viewModel()
                 val chatViewModel: ChatViewModel = viewModel()
+                val profileViewModel: ProfileViewModel = viewModel()
 
                 NavigationScreen(
                     authViewModel = authViewModel,
                     eventsViewModel = eventsViewModel,
-                    chatViewModel = chatViewModel
+                    chatViewModel = chatViewModel,
+                    profileViewModel = profileViewModel
                 )
             }
         }
