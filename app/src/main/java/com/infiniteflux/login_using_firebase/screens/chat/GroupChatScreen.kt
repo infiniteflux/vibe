@@ -25,9 +25,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.data.Message
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
-import com.infiniteflux.login_using_firebase.viewmodel.Message
+
 
 // IMPORTANT: Make sure you are importing the new data class and ViewModel
 

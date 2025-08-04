@@ -24,8 +24,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.data.User
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
-import com.infiniteflux.login_using_firebase.viewmodel.User // <-- FIX: Import User class
+ // <-- FIX: Import User class
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

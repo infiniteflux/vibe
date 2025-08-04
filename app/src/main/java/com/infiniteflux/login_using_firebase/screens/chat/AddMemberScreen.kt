@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
-import com.infiniteflux.login_using_firebase.viewmodel.User
 
 
 @OptIn(ExperimentalMaterial3Api::class)

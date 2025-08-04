@@ -8,35 +8,12 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ServerTimestamp // <-- 1. Import ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.infiniteflux.login_using_firebase.data.Group
+import com.infiniteflux.login_using_firebase.data.Message
+import com.infiniteflux.login_using_firebase.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// --- Data Classes for Chat ---
-
-data class User(
-    val id: String = "",
-    val name: String = "",
-    val avatarUrl: String = ""
-)
-
-data class Group(
-    val id: String = "",
-    val name: String = "",
-    val relatedEvent: String = "",
-    val memberIds: List<String> = listOf(),
-    val groupAvatarUrl: String = ""
-)
-
-data class Message(
-    val id: String = "",
-    val text: String = "",
-    val senderId: String = "",
-    val senderName: String = "",
-    // --- 2. Add the @ServerTimestamp annotation ---
-    // This tells Firestore to automatically manage this field.
-    @ServerTimestamp
-    val timestamp: Timestamp? = null
-)
 
 
 // --- The ViewModel Class ---

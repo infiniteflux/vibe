@@ -28,6 +28,7 @@ object AppRoutes {
     const val PROFILE = "profile"
     const val GROUP_INFO = "group_info"
     const val ADD_MEMBER_TO_GROUP = "add_member_to_group"
+    const val VERIFICATION ="Verification"
 }
 
 class MainActivity : ComponentActivity() {

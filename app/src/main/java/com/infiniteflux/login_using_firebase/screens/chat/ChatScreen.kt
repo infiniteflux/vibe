@@ -31,9 +31,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage // <-- IMPORTANT: Import for Coil
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.data.Group
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
-import com.infiniteflux.login_using_firebase.viewmodel.Group
 
 /*
  * =====================================================================================
