@@ -233,7 +233,7 @@ fun QuickActionsSection(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            QuickActionCard(onClickAction ={navController.navigate(AppRoutes.EVENTS)},"Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
+            QuickActionCard(onClickAction ={navController.navigate(AppRoutes.CREATE_EVENT)},"Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
             QuickActionCard(onClickAction = {navController.navigate(AppRoutes.CHATS)},"Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
             QuickActionCard(onClickAction = {navController.navigate(AppRoutes.PROFILE)},"Connections", Icons.Default.Favorite, Color(0xFFE91E63))
         }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -26,6 +27,7 @@ import com.infiniteflux.login_using_firebase.screens.event.EventsScreen
 import com.infiniteflux.login_using_firebase.screens.chat.GroupChatScreen
 import com.infiniteflux.login_using_firebase.screens.chat.GroupInfoScreen
 import com.infiniteflux.login_using_firebase.screens.discover.HomeScreen
+import com.infiniteflux.login_using_firebase.screens.event.CreateEventScreen
 import com.infiniteflux.login_using_firebase.screens.login.LoginScreen
 import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
@@ -178,6 +180,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                         authViewModel.signout()
                     }
                 )
+            }
+
+            composable (AppRoutes.CREATE_EVENT){
+                CreateEventScreen(navController= navController, viewModel = eventsViewModel)
             }
         }
     }

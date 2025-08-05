@@ -17,6 +17,9 @@ class AuthViewModel : ViewModel() {
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
 
+    private val _currentUserName = MutableLiveData<String>()
+    val currentUserName: LiveData<String> = _currentUserName
+
     init {
         checkAuthState()
     }
@@ -28,11 +31,24 @@ class AuthViewModel : ViewModel() {
         } else {
             // --- CHANGE 1: Check if the user's email is verified ---
             if (currentUser.isEmailVerified) {
+                fetchUserName(currentUser.uid)
                 _authState.value = AuthState.Authenticated
             } else {
                 _authState.value = AuthState.NeedsVerification
             }
         }
+    }
+
+    // --- 3. Add the new function to fetch the user's name from Firestore ---
+    private fun fetchUserName(uid: String) {
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                _currentUserName.value = document.getString("name") ?: "User"
+            }
+            .addOnFailureListener {
+                // Handle the error, maybe set a default name
+                _currentUserName.value = "User"
+            }
     }
 
     fun login(email: String, password: String) {

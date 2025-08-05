@@ -18,7 +18,8 @@ data class Group(
     // Add fields for the last message
     val lastMessageText: String = "No messages yet.",
     @ServerTimestamp
-    val lastMessageTimestamp: Timestamp? = null
+    val lastMessageTimestamp: Timestamp? = null,
+    val lastMessageSenderName: String = ""
 )
 
 data class GroupReadStatus(
