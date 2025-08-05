@@ -1,5 +1,4 @@
 package com.infiniteflux.login_using_firebase.screens.event
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,20 +15,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage // <-- 1. Import Coil's AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
-import com.infiniteflux.login_using_firebase.sharedComponents.BottomNavigationBar
-import com.infiniteflux.login_using_firebase.viewmodel.Event
+import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+
+/*
+ * =====================================================================================
+ * NOTE:
+ * This UI is now connected to the dynamic EventsViewModel.
+ *
+ * 1.  **Add Coil Dependency:** To load images from a URL, you need the Coil library.
+ * Add this to your app-level `build.gradle.kts` file:
+ * `implementation("io.coil-kt:coil-compose:2.6.0")`
+ *
+ * 2.  **Navigation Update:** The Event ID is now a String. You must update the
+ * navigation route for `EVENT_DETAILS` to accept a String argument.
+ * =====================================================================================
+ */
 
 @Composable
 fun EventsScreen(navController: NavController, viewModel: EventsViewModel) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
+
+    // --- 3. Collect both events and the set of joined event IDs ---
     val events by viewModel.events.collectAsState()
+    val joinedEventIds by viewModel.joinedEventIds.collectAsState()
 
     val filteredEvents = events.filter {
         (it.title.contains(searchQuery, ignoreCase = true) || it.location.contains(searchQuery, ignoreCase = true)) &&
@@ -52,15 +67,25 @@ fun EventsScreen(navController: NavController, viewModel: EventsViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(filteredEvents, key = { it.id }) { event ->
+                // --- 4. Determine if the user has joined this event ---
+                val isJoined = joinedEventIds.contains(event.id)
+
                 EventCard(
                     event = event,
+                    isJoined = isJoined, // Pass the joined status
                     onCardClicked = {
+                        // The event ID is now a String
                         navController.navigate("${AppRoutes.EVENT_DETAILS}/${event.id}")
+                    },
+                    onJoinClicked = {
+                        // Add a lambda to handle the join button click
+                        viewModel.toggleJoinedStatus(event.id)
                     }
                 )
             }
         }
-        BottomNavigationBar(navController=NavController(context = LocalContext.current))
+        // This was incorrect before, it should use the passed NavController
+        // BottomNavigationBar(navController = navController)
     }
 }
 
@@ -102,6 +127,7 @@ fun SearchBar(value: String, onValueChange: (String) -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     val categories = listOf("All", "Social", "Food", "Study")
@@ -133,7 +159,12 @@ fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) 
 }
 
 @Composable
-fun EventCard(event: Event, onCardClicked: () -> Unit) {
+fun EventCard(
+    event: Event,
+    isJoined: Boolean, // --- 5. Receive the joined status ---
+    onCardClicked: () -> Unit,
+    onJoinClicked: () -> Unit // --- 6. Receive the join click handler ---
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -143,24 +174,20 @@ fun EventCard(event: Event, onCardClicked: () -> Unit) {
     ) {
         Column {
             Box(modifier = Modifier.height(150.dp)) {
-                Image(
-                    painter = painterResource(id = event.imageRes),
+                // --- 7. Use Coil's AsyncImage to load from a URL ---
+                AsyncImage(
+                    model = event.imageUrl,
                     contentDescription = event.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
+                // This logic can remain the same if you add 'isCurated' to your Firestore model
+                // For now, it's removed as it's not in the dynamic data class
+                /*
                 if (event.isCurated) {
-                    Text(
-                        text = "✨ VIBE Curated",
-                        color = Color.Black,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .background(Color(0xFFFFD54F), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
-                    )
+                    Text(...)
                 }
+                */
             }
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(event.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
@@ -182,41 +209,31 @@ fun EventCard(event: Event, onCardClicked: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("${event.joinedCount}/${event.totalCount} joined", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                    // This data is not in the new model, can be added later
+                    // Text("${event.joinedCount}/${event.totalCount} joined", ...)
+                    Spacer(modifier = Modifier.weight(1f))
                     Button(
-                        onClick = { /* The whole card is now clickable */ },
-                        enabled = false, // Disable direct clicks on the button
+                        // --- 8. Connect the button's onClick ---
+                        onClick = onJoinClicked,
                         shape = RoundedCornerShape(50),
-                        colors = if (event.isJoined) {
+                        colors = if (isJoined) {
                             ButtonDefaults.buttonColors(
-                                containerColor = Color.LightGray,
-                                disabledContainerColor = Color.LightGray.copy(alpha = 0.8f)
+                                containerColor = Color.LightGray
                             )
                         } else {
                             ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                                containerColor = MaterialTheme.colorScheme.primary
                             )
                         }
                     ) {
-                        if (event.isJoined) {
+                        if (isJoined) {
                             Icon(Icons.Default.Check, contentDescription = "Joined", modifier = Modifier.size(ButtonDefaults.IconSize))
                             Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
                         }
-                        Text(if (event.isJoined) "Joined" else "Join", fontWeight = FontWeight.Bold)
+                        Text(if (isJoined) "Joined" else "Join", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
     }
 }
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun DiscoverEventsScreenPreview() {
-//    VibeWithMeTheme {
-//        val navController = rememberNavController()
-//        val viewModel = EventsViewModel()
-//        DiscoverEventsScreen(navController = navController, viewModel = viewModel)
-//    }
-//}

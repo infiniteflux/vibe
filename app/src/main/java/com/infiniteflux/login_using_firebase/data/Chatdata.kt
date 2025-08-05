@@ -14,7 +14,16 @@ data class Group(
     val name: String = "",
     val relatedEvent: String = "",
     val memberIds: List<String> = listOf(),
-    val groupAvatarUrl: String = ""
+    val groupAvatarUrl: String = "",
+    // Add fields for the last message
+    val lastMessageText: String = "No messages yet.",
+    @ServerTimestamp
+    val lastMessageTimestamp: Timestamp? = null
+)
+
+data class GroupReadStatus(
+    @ServerTimestamp
+    val lastReadTimestamp: Timestamp? = null
 )
 
 data class Message(

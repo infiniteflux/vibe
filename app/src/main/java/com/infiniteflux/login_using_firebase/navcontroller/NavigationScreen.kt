@@ -109,11 +109,14 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
             composable(AppRoutes.EVENTS) {
                 EventsScreen(navController = navController, viewModel = eventsViewModel)
             }
+
             composable(
                 route = "${AppRoutes.EVENT_DETAILS}/{eventId}",
-                arguments = listOf(navArgument("eventId") { type = NavType.IntType })
+                // 1. Change the argument type to StringType
+                arguments = listOf(navArgument("eventId") { type = NavType.StringType })
             ) { backStackEntry ->
-                val eventId = backStackEntry.arguments?.getInt("eventId")
+                // 2. Get the argument as a String
+                val eventId = backStackEntry.arguments?.getString("eventId")
                 if (eventId != null) {
                     EventDetailsScreen(
                         navController = navController,
@@ -122,6 +125,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     )
                 }
             }
+
             composable(AppRoutes.CHATS) {
                 ChatScreen(navController = navController, viewModel = chatViewModel)
             }

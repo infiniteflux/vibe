@@ -9,11 +9,11 @@ import com.google.firebase.firestore.ServerTimestamp // <-- 1. Import ServerTime
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.infiniteflux.login_using_firebase.data.Group
+import com.infiniteflux.login_using_firebase.data.GroupReadStatus
 import com.infiniteflux.login_using_firebase.data.Message
 import com.infiniteflux.login_using_firebase.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-
 
 
 // --- The ViewModel Class ---
@@ -34,6 +34,10 @@ class ChatViewModel : ViewModel() {
     // --- 2. State to hold all users in the app ---
     private val _allUsers = MutableStateFlow<List<User>>(emptyList())
     val allUsers: StateFlow<List<User>> = _allUsers
+
+    // --- 2. NEW STATE TO HOLD THE USER'S READ STATUS FOR EACH GROUP ---
+    private val _groupReadStatus = MutableStateFlow<Map<String, GroupReadStatus>>(emptyMap())
+    val groupReadStatus: StateFlow<Map<String, GroupReadStatus>> = _groupReadStatus
 
     // --- 3. NEW FUNCTION: Fetch all users from the 'users' collection ---
     fun fetchAllUsers() {
@@ -111,9 +115,46 @@ class ChatViewModel : ViewModel() {
             senderName = senderName
             // The timestamp is now handled by the @ServerTimestamp annotation
         )
+        val groupRef = db.collection("groups").document(groupId)
 
-        db.collection("groups").document(groupId)
-            .collection("messages")
-            .add(message)
+        // Add the message to the sub-collection
+        groupRef.collection("messages").add(message)
+
+        // Update the last message details on the parent group document
+        groupRef.update(
+            "lastMessageText", text,
+            "lastMessageTimestamp", FieldValue.serverTimestamp() // Use server timestamp
+        )
+        markGroupAsRead(groupId)
+    }
+
+
+    // --- 4. NEW FUNCTION TO UPDATE THE LAST READ TIME ---
+    /**
+     * Call this function whenever a user enters a chat screen.
+     */
+    fun markGroupAsRead(groupId: String) {
+        if (currentUserId == null) return
+
+        val readStatusRef = db.collection("users").document(currentUserId)
+            .collection("groupReadStatus").document(groupId)
+
+        // Set the lastReadTimestamp to the current time on the server
+        readStatusRef.set(mapOf("lastReadTimestamp" to FieldValue.serverTimestamp()))
+    }
+
+    // --- 5. NEW FUNCTION TO FETCH THE READ STATUSES ---
+    fun fetchGroupReadStatuses() {
+        if (currentUserId == null) return
+
+        db.collection("users").document(currentUserId)
+            .collection("groupReadStatus")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                val statusMap = snapshots.documents.associate { doc ->
+                    doc.id to (doc.toObject(GroupReadStatus::class.java) ?: GroupReadStatus())
+                }
+                _groupReadStatus.value = statusMap
+            }
     }
 }

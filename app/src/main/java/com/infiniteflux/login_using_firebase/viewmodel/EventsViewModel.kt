@@ -1,50 +1,121 @@
 package com.infiniteflux.login_using_firebase.viewmodel
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
-import com.infiniteflux.login_using_firebase.R
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
+import com.infiniteflux.login_using_firebase.data.Event
+import com.infiniteflux.login_using_firebase.data.JoinedEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// Updated Event data class with more details
-data class Event(
-    val id: Int,
-    val title: String,
-    val location: String,
-    val date: String,
-    val joinedCount: Int,
-    val totalCount: Int,
-    val imageRes: Int, // Using drawable resource for simplicity
-    var isJoined: Boolean,
-    val category: String,
-    val isCurated: Boolean = true,
-    val description: String,
-    val host: String
-)
-
-// Updated dummy data for events
-private val sampleEvents = listOf(
-    Event(1, "Coffee & Connections", "Campus Café", "12/7/2025 at 2:30 PM", 18, 24, R.drawable.lazy, false, "Social", true, "The perfect opportunity to network with fellow students and professionals in a relaxed, cozy cafe setting. Grab a coffee and make some new connections!", "VIBE Community"),
-    Event(2, "Taco Tuesday Fiesta", "El Mariachi Restaurant", "15/7/2025 at 11:30 PM", 12, 30, R.drawable.lazy, true, "Food", true, "Join us for a delicious Taco Tuesday! Enjoy authentic Mexican food, great music, and even better company. All-you-can-eat tacos for the first hour.", "El Mariachi"),
-    Event(3, "Study Group Session", "Library Room 301", "18/7/2025 at 4:00 PM", 5, 15, R.drawable.lazy, false, "Study", false, "Need to cram for finals? Join our group study session for Computer Science 101. We'll have snacks and a teaching assistant on hand to answer questions.", "CS Department"),
-    Event(4, "Weekend Movie Night", "Student Union Cinema", "20/7/2025 at 8:00 PM", 25, 50, R.drawable.lazy, false, "Social", false, "Unwind after a long week with a free movie night at the student cinema. We'll be showing a recent blockbuster. Popcorn is on us!", "Student Activities Board")
-)
-
 class EventsViewModel : ViewModel() {
-    private val _events = MutableStateFlow(sampleEvents)
+    private val db = Firebase.firestore
+    private val auth = Firebase.auth
+    private val currentUserId = auth.currentUser?.uid
+
+    // --- State for the list of all events ---
+    private val _events = MutableStateFlow<List<Event>>(emptyList())
     val events: StateFlow<List<Event>> = _events
 
-    fun findEvent(eventId: Int): Event? {
+    // --- State to hold the IDs of events the user has joined ---
+    private val _joinedEventIds = MutableStateFlow<Set<String>>(emptySet())
+    val joinedEventIds: StateFlow<Set<String>> = _joinedEventIds
+
+    init {
+        // Automatically fetch data when the ViewModel is created
+        fetchEvents()
+        fetchJoinedEvents()
+    }
+
+
+    // --- NEW FUNCTION TO CREATE AN EVENT ---
+    /**
+     * Creates a new event document in the 'events' collection.
+     */
+    fun createEvent(
+        title: String,
+        location: String,
+        date: String,
+        category: String,
+        description: String,
+        host: String
+    ) {
+        // Basic validation
+        if (title.isBlank() || location.isBlank() || date.isBlank() || category.isBlank() || description.isBlank() || host.isBlank()) {
+            // In a real app, you'd want to show an error to the user
+            return
+        }
+
+        val newEvent = Event(
+            title = title,
+            location = location,
+            date = date,
+            category = category,
+            description = description,
+            host = host,
+            imageUrl = "https://avatars.githubusercontent.com/u/147044141?s=400&u=0848775e883324ec1bd028ca3a7bc3ded25a0f18&v=4" // Use a default placeholder image
+        )
+
+        // Add the new event to the 'events' collection
+        db.collection("events").add(newEvent)
+            .addOnSuccessListener {
+                // You could add a success message or navigation here if needed
+            }
+            .addOnFailureListener {
+                // Handle the error
+            }
+    }
+
+    /**
+     * Fetches all events from the 'events' collection.
+     */
+    private fun fetchEvents() {
+        db.collection("events")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                _events.value = snapshots.documents.mapNotNull {
+                    it.toObject(Event::class.java)?.copy(id = it.id)
+                }
+            }
+    }
+
+    /**
+     * Fetches the IDs of all events the current user has joined.
+     */
+    private fun fetchJoinedEvents() {
+        if (currentUserId == null) return
+
+        db.collection("users").document(currentUserId)
+            .collection("joinedEvents")
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                // We only need the document IDs, which are the event IDs
+                _joinedEventIds.value = snapshots.documents.map { it.id }.toSet()
+            }
+    }
+
+    /**
+     * Finds a specific event from the already fetched list.
+     */
+    fun findEvent(eventId: String): Event? {
         return _events.value.find { it.id == eventId }
     }
 
-    fun toggleJoinedStatus(eventId: Int) {
-        val currentEvents = _events.value.toMutableList()
-        val eventIndex = currentEvents.indexOfFirst { it.id == eventId }
-        if (eventIndex != -1) {
-            val oldEvent = currentEvents[eventIndex]
-            val newEvent = oldEvent.copy(isJoined = !oldEvent.isJoined)
-            currentEvents[eventIndex] = newEvent
-            _events.value = currentEvents
+    /**
+     * Toggles the user's joined status for a specific event.
+     */
+    fun toggleJoinedStatus(eventId: String) {
+        if (currentUserId == null) return
+
+        val eventRef = db.collection("users").document(currentUserId)
+            .collection("joinedEvents").document(eventId)
+
+        if (_joinedEventIds.value.contains(eventId)) {
+            // If the user has already joined, delete the document to "un-join"
+            eventRef.delete()
+        } else {
+            // If the user has not joined, create the document to "join"
+            eventRef.set(JoinedEvent(eventId = eventId))
         }
     }
 }

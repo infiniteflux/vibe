@@ -1,6 +1,5 @@
 package com.infiniteflux.login_using_firebase.screens.chat
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,13 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,37 +22,24 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage // <-- IMPORTANT: Import for Coil
+import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Group
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 
-/*
- * =====================================================================================
- * HOW TO USE THIS CODE
- * =====================================================================================
- * This code is adapted to work with the live Firebase data model.
- *
- * 1.  **Add Coil Dependency:** To load images from a URL, you need the Coil library.
- * Add this to your app-level `build.gradle.kts` file:
- * `implementation("io.coil-kt:coil-compose:2.6.0")`
- *
- * 2.  **Update Imports:** Make sure you are importing the new `Group` data class and
- * the new `ChatViewModel` as defined in the `group_chat_workflow_guide`.
- * =====================================================================================
- */
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewModel()) {
+    // --- 1. Fetch both groups and the user's read statuses ---
     LaunchedEffect(key1 = Unit) {
         viewModel.fetchUserGroups()
+        viewModel.fetchGroupReadStatuses()
     }
 
     val groups by viewModel.groups.collectAsState()
-    // 1. State to control the visibility of the dialog
+    val readStatuses by viewModel.groupReadStatus.collectAsState()
     var showCreateGroupDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -75,7 +55,6 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
                     text = "Group Chats",
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
                 )
-                // 2. Update IconButton to show the dialog
                 IconButton(onClick = { showCreateGroupDialog = true }) {
                     Icon(Icons.Default.Add, contentDescription = "New Chat", modifier = Modifier.size(32.dp))
                 }
@@ -88,15 +67,25 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
                 .padding(innerPadding)
         ) {
             items(groups) { group ->
-                ChatListItem(group = group, onClick = {
-                    navController.navigate("${AppRoutes.CHAT_GROUP_DETAILS}/${group.id}/${group.name}")
-                })
+                // --- 2. Determine if there are unread messages ---
+                val lastReadTimestamp = readStatuses[group.id]?.lastReadTimestamp
+                val isUnread = (group.lastMessageTimestamp != null && lastReadTimestamp != null && group.lastMessageTimestamp > lastReadTimestamp)
+                        || (group.lastMessageTimestamp != null && lastReadTimestamp == null)
+
+                ChatListItem(
+                    group = group,
+                    isUnread = isUnread, // Pass the unread status to the item
+                    onClick = {
+                        // --- 3. Mark the group as read when the user clicks it ---
+                        viewModel.markGroupAsRead(group.id)
+                        navController.navigate("${AppRoutes.CHAT_GROUP_DETAILS}/${group.id}/${group.name}")
+                    }
+                )
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
             }
         }
     }
 
-    // 3. Conditionally display the dialog
     if (showCreateGroupDialog) {
         CreateGroupDialog(
             onDismiss = { showCreateGroupDialog = false },
@@ -108,7 +97,6 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
     }
 }
 
-// 4. A new Composable for the dialog
 @Composable
 private fun CreateGroupDialog(
     onDismiss: () -> Unit,
@@ -140,7 +128,7 @@ private fun CreateGroupDialog(
         confirmButton = {
             Button(
                 onClick = { onCreate(groupName, relatedEvent) },
-                enabled = groupName.isNotBlank() // Button is only enabled if name is not empty
+                enabled = groupName.isNotBlank()
             ) {
                 Text("Create")
             }
@@ -155,7 +143,7 @@ private fun CreateGroupDialog(
 
 
 @Composable
-private fun ChatListItem(group: Group, onClick: () -> Unit) {
+private fun ChatListItem(group: Group, isUnread: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,15 +163,30 @@ private fun ChatListItem(group: Group, onClick: () -> Unit) {
         Column(modifier = Modifier.weight(1f)) {
             Text(group.name, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Tap to open chat", color = Color.Gray, maxLines = 1)
+            // --- 4. Display the last message text and style if unread ---
+            Text(
+                text = group.lastMessageText,
+                color = if (isUnread) MaterialTheme.colorScheme.onSurface else Color.Gray,
+                fontWeight = if (isUnread) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(group.relatedEvent, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp)
         }
         Spacer(modifier = Modifier.width(16.dp))
         Column(horizontalAlignment = Alignment.End) {
+            // You can also format and display the last message timestamp here
             Text("11 Jul", fontSize = 12.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("${group.memberIds.size} members", fontSize = 12.sp, color = Color.Gray)
+            // --- 5. Show a badge if there are unread messages ---
+            if (isUnread) {
+                Badge(
+                    modifier = Modifier.size(10.dp) // A simple dot for indication
+                )
+            } else {
+                // Show member count if there are no unread messages
+                Text("${group.memberIds.size} members", fontSize = 12.sp, color = Color.Gray)
+            }
         }
         Icon(Icons.Default.ChevronRight, contentDescription = "Open Chat", tint = Color.Gray, modifier = Modifier.padding(start = 8.dp))
     }
@@ -194,7 +197,6 @@ private fun ChatListItem(group: Group, onClick: () -> Unit) {
 @Composable
 fun ChatListScreenPreview() {
     Login_Using_FirebaseTheme {
-        // Preview will now show an empty list, which is expected as it's not connected to Firebase.
         ChatScreen(navController = rememberNavController(), viewModel = viewModel())
     }
 }
