@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.R
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import kotlinx.coroutines.delay
 
