@@ -27,6 +27,7 @@ import com.infiniteflux.login_using_firebase.screens.event.EventsScreen
 import com.infiniteflux.login_using_firebase.screens.chat.GroupChatScreen
 import com.infiniteflux.login_using_firebase.screens.chat.GroupInfoScreen
 import com.infiniteflux.login_using_firebase.screens.discover.HomeScreen
+import com.infiniteflux.login_using_firebase.screens.discover.SplashScreen
 import com.infiniteflux.login_using_firebase.screens.event.CreateEventScreen
 import com.infiniteflux.login_using_firebase.screens.login.LoginScreen
 import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
@@ -195,6 +196,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
 
             composable ( AppRoutes.EDITPROFILE ){
                 EditProfileScreen(navController = navController, viewModel = profileViewModel)
+            }
+
+            composable (AppRoutes.SPLASH){
+                SplashScreen(navController = navController)
             }
         }
     }

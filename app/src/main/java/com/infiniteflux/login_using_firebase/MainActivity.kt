@@ -32,6 +32,7 @@ object AppRoutes {
     const val VERIFICATION ="Verification"
     const val CREATE_EVENT = "Create Event"
     const val EDITPROFILE ="Edit profile"
+    const val SPLASH = "SplashScreen"
 }
 
 class MainActivity : ComponentActivity() {
