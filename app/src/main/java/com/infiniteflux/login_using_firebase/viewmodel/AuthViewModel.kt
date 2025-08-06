@@ -20,6 +20,10 @@ class AuthViewModel : ViewModel() {
     private val _currentUserName = MutableLiveData<String>()
     val currentUserName: LiveData<String> = _currentUserName
 
+    // --- 2. ADD LIVEDATA TO HOLD THE CURRENT USER'S ROLE ---
+    private val _userRole = MutableLiveData<String>()
+    val userRole: LiveData<String> = _userRole
+
     init {
         checkAuthState()
     }
@@ -28,15 +32,28 @@ class AuthViewModel : ViewModel() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             _authState.value = AuthState.Unauthenticated
+            _userRole.value = "user"
         } else {
             // --- CHANGE 1: Check if the user's email is verified ---
             if (currentUser.isEmailVerified) {
+                fetchUserRole(currentUser.uid)
                 fetchUserName(currentUser.uid)
                 _authState.value = AuthState.Authenticated
             } else {
                 _authState.value = AuthState.NeedsVerification
             }
         }
+    }
+
+    private fun fetchUserRole(uid: String) {
+        db.collection("users").document(uid).get()
+            .addOnSuccessListener { document ->
+                // Get the role from the document, default to "user" if not found
+                _userRole.value = document.getString("role") ?: "user"
+            }
+            .addOnFailureListener {
+                _userRole.value = "user" // Default to "user" on error
+            }
     }
 
     // --- 3. Add the new function to fetch the user's name from Firestore ---
@@ -111,7 +128,8 @@ class AuthViewModel : ViewModel() {
         val newUser = User(
             id = uid,
             name = name,
-            avatarUrl = "https://placehold.co/100" // Default avatar
+            avatarUrl = "https://placehold.co/100", // Default avatar
+            role = "user"
         )
 
         db.collection("users").document(uid).set(newUser)

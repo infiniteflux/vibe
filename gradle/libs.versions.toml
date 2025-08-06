@@ -17,6 +17,7 @@ coilCompose = "2.6.0"
 # This is the ONLY Firebase version you need to define.
 # It's a stable version known to be compatible with many projects.
 firebase-bom = "33.1.2"
+foundation = "1.8.3"
 
 
 [libraries]
@@ -43,6 +44,7 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 # Firebase Libraries - NO versions needed here. The BoM handles them.
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx" }
 
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -50,6 +52,7 @@ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "j
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 
 [plugins]

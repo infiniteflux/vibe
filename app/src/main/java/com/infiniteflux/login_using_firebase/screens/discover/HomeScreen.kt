@@ -1,61 +1,49 @@
 package com.infiniteflux.login_using_firebase.screens.discover
 
-
-import android.service.autofill.OnClickAction
-import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
-import com.infiniteflux.login_using_firebase.R
-import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
-import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun  Homescreenpreview(){
-    Login_Using_FirebaseTheme {
-        HomeScreen(navController = rememberNavController(), authViewModel = viewModel())
-    }
-}
-// Placeholder ViewModel - Replace with your actual implementation
-class AuthViewModel : ViewModel() {
-    // Add any necessary state or logic for authentication here
-}
+import com.infiniteflux.login_using_firebase.data.Event
+import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
-    // The Scaffold is now in MainApp.kt, so we just provide the content.
+fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
+    // Collect the dynamic data from the ViewModel
+    val userName by viewModel.userName.collectAsState()
+    val eventsCount by viewModel.eventsCount.collectAsState()
+    val trendingEvents by viewModel.trendingEvents.collectAsState()
+
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxSize()
     ) {
-        TopBar()
+        TopBar(userName = userName)
         Spacer(modifier = Modifier.height(16.dp))
-        StatsSection()
+        StatsSection(eventsCount = eventsCount)
         Spacer(modifier = Modifier.height(24.dp))
-        TrendingEventsSection(navController)
+        TrendingEventsSection(navController = navController, trendingEvents = trendingEvents)
         Spacer(modifier = Modifier.height(24.dp))
         QuickActionsSection(navController)
         Spacer(modifier = Modifier.height(24.dp))
@@ -64,7 +52,7 @@ fun HomeScreen(navController: NavController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun TopBar() {
+fun TopBar(userName: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,7 +62,7 @@ fun TopBar() {
     ) {
         Column {
             Text(
-                text = "Hey Dev! 👋",
+                text = "Hey $userName! 👋",
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
             )
             Text(
@@ -101,14 +89,14 @@ fun TopBar() {
 }
 
 @Composable
-fun StatsSection() {
+fun StatsSection(eventsCount: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
-        StatCard("5", "Events", Icons.Default.Event)
+        StatCard(value = eventsCount.toString(), "Events", Icons.Default.Event)
         StatCard("12", "Connections", Icons.Default.People)
-        StatCard("0", "This Week", Icons.Default.TrendingUp)
+        StatCard("0", "This Week", Icons.AutoMirrored.Filled.TrendingUp)
     }
 }
 
@@ -133,7 +121,7 @@ fun StatCard(value: String, label: String, icon: ImageVector) {
 }
 
 @Composable
-fun TrendingEventsSection(navController: NavController) {
+fun TrendingEventsSection(navController: NavController, trendingEvents: List<Event>) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -144,29 +132,32 @@ fun TrendingEventsSection(navController: NavController) {
                 text = "🔥 Trending Events",
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
-            TextButton(onClick = { navController.navigate(AppRoutes.EVENTS)
-            }) {
+            TextButton(onClick = { navController.navigate(AppRoutes.EVENTS) }) {
                 Text("See All", color = MaterialTheme.colorScheme.primary)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        TrendingEventCard()
+        // Show the first trending event, or a placeholder if the list is empty
+        if (trendingEvents.isNotEmpty()) {
+            TrendingEventCard(event = trendingEvents.first())
+        } else {
+            // You can add a placeholder card here for when the data is loading
+            Text("Loading trending events...", color = Color.Gray)
+        }
     }
 }
 
 @Composable
-fun TrendingEventCard() {
+fun TrendingEventCard(event: Event) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Box {
-            // In a real app, you'd load this image from a URL
-            // You should replace R.drawable.coffee_event with your actual image resource.
-            Image(
-                painter = painterResource(id = R.drawable.lazy),
-                contentDescription = "Coffee & Connections event",
+            AsyncImage(
+                model = event.imageUrl,
+                contentDescription = event.title,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp),
@@ -182,9 +173,8 @@ fun TrendingEventCard() {
                     )
                     .padding(16.dp)
             ) {
-                Text("✨ VIBE Curated", color = Color(0xFFFFD54F), style = MaterialTheme.typography.bodySmall)
                 Text(
-                    "Coffee & Connections",
+                    event.title,
                     color = Color.White,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
@@ -192,34 +182,18 @@ fun TrendingEventCard() {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.LocationOn, contentDescription = "Location", tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Campus Café", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                    Text(event.location, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.CalendarToday, contentDescription = "Date", tint = Color.White, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("12/7/2025 at 2:30 PM", color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("18/24 joined", color = Color.LightGray, style = MaterialTheme.typography.bodySmall)
-                    Button(
-                        onClick = { /*TODO*/ },
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White)
-                    ) {
-                        Text("Join", color = Color.Black, fontWeight = FontWeight.Bold)
-                    }
+                    Text(event.date, color = Color.White, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun QuickActionsSection(navController: NavController) {
@@ -233,15 +207,15 @@ fun QuickActionsSection(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            QuickActionCard(onClickAction ={navController.navigate(AppRoutes.CREATE_EVENT)},"Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
-            QuickActionCard(onClickAction = {navController.navigate(AppRoutes.CHATS)},"Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
-            QuickActionCard(onClickAction = {navController.navigate(AppRoutes.PROFILE)},"Connections", Icons.Default.Favorite, Color(0xFFE91E63))
+            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.CREATE_EVENT)  }, "Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
+            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.CHATS) }, "Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
+            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.PROFILE) }, "Connections", Icons.Default.Favorite, Color(0xFFE91E63))
         }
     }
 }
 
 @Composable
-fun QuickActionCard(onClickAction: () -> Unit,label: String, icon: ImageVector, iconColor: Color) {
+fun QuickActionCard(onClickAction: () -> Unit, label: String, icon: ImageVector, iconColor: Color) {
     Card(
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -250,19 +224,16 @@ fun QuickActionCard(onClickAction: () -> Unit,label: String, icon: ImageVector, 
             .width(100.dp)
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().clickable(onClick = onClickAction),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            IconButton(onClick = onClickAction)
-            {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = label,
-                    tint = iconColor,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = iconColor,
+                modifier = Modifier.size(32.dp)
+            )
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = label, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
         }
@@ -301,4 +272,3 @@ fun StaySafeSection() {
         }
     }
 }
-

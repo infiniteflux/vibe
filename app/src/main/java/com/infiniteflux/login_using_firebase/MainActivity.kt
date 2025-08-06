@@ -15,6 +15,7 @@ import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 
 object AppRoutes {
@@ -30,6 +31,7 @@ object AppRoutes {
     const val ADD_MEMBER_TO_GROUP = "add_member_to_group"
     const val VERIFICATION ="Verification"
     const val CREATE_EVENT = "Create Event"
+    const val EDITPROFILE ="Edit profile"
 }
 
 class MainActivity : ComponentActivity() {
@@ -43,12 +45,14 @@ class MainActivity : ComponentActivity() {
                 val eventsViewModel: EventsViewModel = viewModel()
                 val chatViewModel: ChatViewModel = viewModel()
                 val profileViewModel: ProfileViewModel = viewModel()
+                val homeViewModel: HomeViewModel = viewModel ()
 
                 NavigationScreen(
                     authViewModel = authViewModel,
                     eventsViewModel = eventsViewModel,
                     chatViewModel = chatViewModel,
-                    profileViewModel = profileViewModel
+                    profileViewModel = profileViewModel,
+                    homeViewModel = homeViewModel
                 )
             }
         }

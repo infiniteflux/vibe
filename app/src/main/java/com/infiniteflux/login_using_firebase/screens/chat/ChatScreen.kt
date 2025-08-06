@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,13 +29,18 @@ import com.google.firebase.Timestamp
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Group
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
+import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewModel()) {
+fun ChatScreen(
+    navController: NavController,
+    viewModel: ChatViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel() // 1. Get the AuthViewModel
+) {
     LaunchedEffect(key1 = Unit) {
         viewModel.fetchUserGroups()
         viewModel.fetchGroupReadStatuses()
@@ -42,9 +48,14 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
 
     val groups by viewModel.groups.collectAsState()
     val readStatuses by viewModel.groupReadStatus.collectAsState()
-
     val isLoading by viewModel.isLoading.collectAsState()
+
+    // --- 2. Add state for both dialogs ---
     var showCreateGroupDialog by remember { mutableStateOf(false) }
+    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+
+    // --- 3. Observe the user's role from the AuthViewModel ---
+    val userRole by authViewModel.userRole.observeAsState("user")
 
     Scaffold(
         topBar = {
@@ -59,7 +70,14 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
                     text = "Group Chats",
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
                 )
-                IconButton(onClick = { showCreateGroupDialog = true }) {
+                IconButton(onClick = {
+                    // --- 4. Check the role before showing a dialog ---
+                    if (userRole == "creator") {
+                        showCreateGroupDialog = true
+                    } else {
+                        showPermissionDeniedDialog = true
+                    }
+                }) {
                     Icon(Icons.Default.Add, contentDescription = "New Chat", modifier = Modifier.size(32.dp))
                 }
             }
@@ -107,6 +125,28 @@ fun ChatScreen(navController: NavController, viewModel: ChatViewModel = viewMode
             onCreate = { groupName, relatedEvent ->
                 viewModel.createGroup(groupName, relatedEvent)
                 showCreateGroupDialog = false
+            }
+        )
+    }
+
+    // --- 5. The new, improved dialog for non-creators ---
+    if (showPermissionDeniedDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDeniedDialog = false },
+            title = { Text("Feature for Creators Only") },
+            text = { Text("Creating new groups is currently limited to users with the 'creator' role.") },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionDeniedDialog = false
+                    navController.navigate(AppRoutes.EVENTS)
+                }) {
+                    Text("Explore Events")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionDeniedDialog = false }) {
+                    Text("OK")
+                }
             }
         )
     }

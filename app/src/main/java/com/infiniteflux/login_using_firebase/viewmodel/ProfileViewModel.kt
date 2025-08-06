@@ -1,33 +1,94 @@
 package com.infiniteflux.login_using_firebase.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
-import com.infiniteflux.login_using_firebase.R
-
-// Data class for user profile information
-data class UserProfile(
-    val name: String,
-    val email: String,
-    val avatarRes: Int, // Using a drawable resource for the avatar
-    val eventsCount: Int,
-    val connectionsCount: Int,
-    val interestsCount: Int,
-    val aboutMe: String,
-    val interests: List<String>
-)
-
-// Dummy data for the user profile
-private val dummyUserProfile = UserProfile(
-    name = "Dev User",
-    email = "dev@example.com",
-    avatarRes = R.drawable.lazy, // You'll need to add a placeholder avatar image
-    eventsCount = 5,
-    connectionsCount = 12,
-    interestsCount = 3,
-    aboutMe = "Development user for testing the app",
-    interests = listOf("Technology", "Music", "Sports")
-)
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
+import com.google.firebase.firestore.firestore
+import com.infiniteflux.login_using_firebase.data.UserProfile
+import kotlinx.coroutines.flow.MutableStateFlow
+import com.google.firebase.storage.storage
+import kotlinx.coroutines.flow.StateFlow
 
 class ProfileViewModel : ViewModel() {
-    val userProfile = dummyUserProfile
-    // In a real app, this data would be fetched from a repository or database
+    private val auth = Firebase.auth
+    private val db = Firebase.firestore
+    private val storage = Firebase.storage
+    private val currentUserId = auth.currentUser?.uid
+
+    private val _userProfile = MutableStateFlow(UserProfile())
+    val userProfile: StateFlow<UserProfile> = _userProfile
+
+    init {
+        fetchUserProfile()
+    }
+
+    // --- 3. NEW FUNCTION TO UPLOAD THE IMAGE AND UPDATE THE PROFILE ---
+    fun uploadProfileImage(imageUri: Uri) {
+        if (currentUserId == null) return
+
+        // Create a reference to the location where the image will be stored
+        val storageRef = storage.reference.child("profile_images/$currentUserId.jpg")
+
+        // Upload the file
+        storageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                // After upload is successful, get the public download URL
+                storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                    // Save the new URL to the user's document in Firestore
+                    db.collection("users").document(currentUserId)
+                        .update("avatarUrl", downloadUrl.toString())
+                }
+            }
+            .addOnFailureListener {
+                // Handle any errors during upload
+            }
+    }
+
+    // --- NEW FUNCTION TO UPDATE THE USER'S PROFILE ---
+    fun updateUserProfile(newName: String, newAboutMe: String, newInterests: List<String>) {
+        if (currentUserId == null) return
+
+        val userDocRef = db.collection("users").document(currentUserId)
+        val updates = mapOf(
+            "name" to newName,
+            "aboutMe" to newAboutMe,
+            "interests" to newInterests
+        )
+
+        userDocRef.update(updates)
+            .addOnSuccessListener {
+                // Optionally provide success feedback
+            }
+            .addOnFailureListener {
+                // Optionally provide error feedback
+            }
+    }
+
+    private fun fetchUserProfile() {
+        if (currentUserId == null) return
+        _userProfile.value = _userProfile.value.copy(email = auth.currentUser?.email ?: "")
+
+        db.collection("users").document(currentUserId)
+            .addSnapshotListener { document, _ ->
+                if (document == null) return@addSnapshotListener
+                val name = document.getString("name") ?: "No Name"
+                val avatarUrl = document.getString("avatarUrl") ?: ""
+                val aboutMe = document.getString("aboutMe") ?: "Tell us about yourself!"
+                val interests = document.get("interests") as? List<String> ?: emptyList()
+                _userProfile.value = _userProfile.value.copy(
+                    name = name,
+                    avatarUrl = avatarUrl,
+                    aboutMe = aboutMe,
+                    interests = interests,
+                    interestsCount = interests.size
+                )
+            }
+
+        db.collection("users").document(currentUserId)
+            .collection("joinedEvents")
+            .addSnapshotListener { snapshots, _ ->
+                _userProfile.value = _userProfile.value.copy(eventsCount = snapshots?.size() ?: 0)
+            }
+    }
 }

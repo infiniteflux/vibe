@@ -32,16 +32,19 @@ import com.infiniteflux.login_using_firebase.screens.login.LoginScreen
 import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
 import com.infiniteflux.login_using_firebase.screens.login.VerificationScreen
+import com.infiniteflux.login_using_firebase.screens.profile.EditProfileScreen
 import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 
 @Composable
 fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel,
                      chatViewModel: ChatViewModel, eventsViewModel: EventsViewModel,
-                     profileViewModel: ProfileViewModel
+                     profileViewModel: ProfileViewModel,
+                     homeViewModel: HomeViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -106,7 +109,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 SignUpScreen(navController, authViewModel)
             }
             composable(AppRoutes.HOME) {
-                HomeScreen(navController, authViewModel)
+                HomeScreen(navController,  viewModel = homeViewModel)
             }
             composable(AppRoutes.EVENTS) {
                 EventsScreen(navController = navController, viewModel = eventsViewModel)
@@ -168,7 +171,11 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 }
             }
             composable(AppRoutes.PROFILE) {
-                ProfileScreen(navController =navController, viewModel = profileViewModel)
+                ProfileScreen(
+                    navController = navController,
+                    viewModel = profileViewModel, // Pass profileViewModel to 'viewModel'
+                    authViewModel = authViewModel   // Pass authViewModel to 'authViewModel'
+                )
             }
             // Add the new route for the Verification Screen
             composable(AppRoutes.VERIFICATION) {
@@ -184,6 +191,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
 
             composable (AppRoutes.CREATE_EVENT){
                 CreateEventScreen(navController= navController, viewModel = eventsViewModel)
+            }
+
+            composable ( AppRoutes.EDITPROFILE ){
+                EditProfileScreen(navController = navController, viewModel = profileViewModel)
             }
         }
     }

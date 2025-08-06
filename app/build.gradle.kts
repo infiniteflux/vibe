@@ -64,6 +64,9 @@ dependencies {
 
 
     implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation(libs.androidx.foundation)
+
+    implementation(libs.firebase.storage.ktx)
 
     // Testing dependencies
     testImplementation(libs.junit)
