@@ -22,13 +22,15 @@ import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
 import com.infiniteflux.login_using_firebase.screens.login.VerificationScreen
 import com.infiniteflux.login_using_firebase.screens.profile.EditProfileScreen
+import com.infiniteflux.login_using_firebase.screens.profile.connection.ConnectionScreen
 import com.infiniteflux.login_using_firebase.viewmodel.*
 
 @Composable
 fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel,
                      chatViewModel: ChatViewModel, eventsViewModel: EventsViewModel,
                      profileViewModel: ProfileViewModel,
-                     homeViewModel: HomeViewModel
+                     homeViewModel: HomeViewModel,
+                     connectionViewModel: ConnectionViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -197,6 +199,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 }
                 composable(AppRoutes.EDITPROFILE) {
                     EditProfileScreen(navController = navController, viewModel = profileViewModel)
+                }
+
+                composable(AppRoutes.CONNECTION){
+                    ConnectionScreen(navController = navController, viewModel = connectionViewModel)
                 }
             }
 

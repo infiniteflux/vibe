@@ -25,7 +25,7 @@ class AuthViewModel : ViewModel() {
     val userRole: LiveData<String> = _userRole
 
     init {
-        checkAuthState()
+        //checkAuthState()
     }
 
     fun checkAuthState() {

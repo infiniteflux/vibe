@@ -14,6 +14,7 @@ import com.infiniteflux.login_using_firebase.navcontroller.NavigationScreen
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ConnectionViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
@@ -33,6 +34,7 @@ object AppRoutes {
     const val CREATE_EVENT = "Create Event"
     const val EDITPROFILE ="Edit profile"
     const val SPLASH = "SplashScreen"
+    const val CONNECTION = "Connection"
 }
 
 class MainActivity : ComponentActivity() {
@@ -47,13 +49,15 @@ class MainActivity : ComponentActivity() {
                 val chatViewModel: ChatViewModel = viewModel()
                 val profileViewModel: ProfileViewModel = viewModel()
                 val homeViewModel: HomeViewModel = viewModel ()
+                val connectionViewModel: ConnectionViewModel = viewModel()
 
                 NavigationScreen(
                     authViewModel = authViewModel,
                     eventsViewModel = eventsViewModel,
                     chatViewModel = chatViewModel,
                     profileViewModel = profileViewModel,
-                    homeViewModel = homeViewModel
+                    homeViewModel = homeViewModel,
+                    connectionViewModel = connectionViewModel
                 )
             }
         }

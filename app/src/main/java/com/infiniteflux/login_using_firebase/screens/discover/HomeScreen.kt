@@ -3,7 +3,9 @@ package com.infiniteflux.login_using_firebase.screens.discover
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
@@ -254,17 +256,24 @@ fun StaySafeSection() {
             Icon(
                 imageVector = Icons.Default.Shield,
                 contentDescription = "Safety Shield",
-                tint = Color(0xFF4CAF50)
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.align(Alignment.Top) // Align icon to top for better look with scrolling text
             )
             Spacer(modifier = Modifier.width(16.dp))
-            Column {
+            // FIX: Added a fixed height and vertical scroll to the text column
+            Column(
+                modifier = Modifier
+                    .height(50.dp) // This fixed height ensures the card size doesn't change
+                    .verticalScroll(rememberScrollState()) // This makes the content scrollable
+            ) {
                 Text(
                     text = "Stay Safe Out There!",
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF2E7D32)
                 )
                 Text(
-                    text = "Always meet in public places and trust your instincts. Report any concerns immediately.",
+                    // Added more text to demonstrate scrolling
+                    text = "Always meet in public places and trust your instincts. Report any concerns immediately. If you ever feel unsafe, don't hesitate to contact local authorities. Your safety is the top priority. Be aware of your surroundings and let a friend know where you are going.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF2E7D32)
                 )

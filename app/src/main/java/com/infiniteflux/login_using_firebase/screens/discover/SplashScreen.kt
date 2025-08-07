@@ -37,7 +37,7 @@ fun SplashScreen(navController: NavController, authViewModel: AuthViewModel) {
             animationSpec = tween(durationMillis = 800)
         )
         // Wait a moment after the animation
-        delay(20000L) // A 1.5 second delay for a smoother feel
+        delay(1000L) // A 1.5 second delay for a smoother feel
 
         // --- THE FIX ---
         // Trigger the authentication check. The LaunchedEffect in NavigationScreen
