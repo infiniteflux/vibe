@@ -128,7 +128,8 @@ fun ProfileScreen(
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 ActionItem(icon = Icons.Default.People, text = "My Connections", onClick = {navController.navigate(
                     AppRoutes.CONNECTION)})
-                ActionItem(icon = Icons.Default.Warning, text = "Wall of Shame", onClick = {})
+                ActionItem(icon = Icons.Default.Warning, text = "Wall of Shame", onClick = {navController.navigate(
+                    AppRoutes.WALLOFSHAME)})
                 ActionItem(icon = Icons.Default.Flag, text = "Report a User", onClick = {})
                 ActionItem(icon = Icons.Default.Palette, text = "Theme", trailingText = "Light", onClick = {})
                 ActionItem(icon = Icons.Default.Settings, text = "Settings", onClick = {})
