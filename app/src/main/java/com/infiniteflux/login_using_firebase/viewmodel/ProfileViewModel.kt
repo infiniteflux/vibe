@@ -9,17 +9,22 @@ import com.infiniteflux.login_using_firebase.data.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.flow.StateFlow
+import com.google.firebase.firestore.ListenerRegistration
 
 class ProfileViewModel : ViewModel() {
+
+    private var profileListener: ListenerRegistration? = null
+    private var joinedEventsListener: ListenerRegistration? = null
+
     private val auth = Firebase.auth
     private val db = Firebase.firestore
     private val storage = Firebase.storage
-    private val currentUserId = auth.currentUser?.uid
+    private val currentUserId get() = auth.currentUser?.uid
 
     private val _userProfile = MutableStateFlow(UserProfile())
     val userProfile: StateFlow<UserProfile> = _userProfile
 
-    init {
+    fun initializeData() {
         fetchUserProfile()
     }
 
@@ -36,7 +41,7 @@ class ProfileViewModel : ViewModel() {
                 // After upload is successful, get the public download URL
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     // Save the new URL to the user's document in Firestore
-                    db.collection("users").document(currentUserId)
+                    db.collection("users").document(currentUserId!!)
                         .update("avatarUrl", downloadUrl.toString())
                 }
             }
@@ -49,7 +54,7 @@ class ProfileViewModel : ViewModel() {
     fun updateUserProfile(newName: String, newAboutMe: String, newInterests: List<String>) {
         if (currentUserId == null) return
 
-        val userDocRef = db.collection("users").document(currentUserId)
+        val userDocRef = db.collection("users").document(currentUserId!!)
         val updates = mapOf(
             "name" to newName,
             "aboutMe" to newAboutMe,
@@ -65,11 +70,11 @@ class ProfileViewModel : ViewModel() {
             }
     }
 
-    private fun fetchUserProfile() {
+    fun fetchUserProfile() {
         if (currentUserId == null) return
         _userProfile.value = _userProfile.value.copy(email = auth.currentUser?.email ?: "")
 
-        db.collection("users").document(currentUserId)
+        profileListener=db.collection("users").document(currentUserId!!)
             .addSnapshotListener { document, _ ->
                 if (document == null) return@addSnapshotListener
                 val name = document.getString("name") ?: "No Name"
@@ -85,10 +90,16 @@ class ProfileViewModel : ViewModel() {
                 )
             }
 
-        db.collection("users").document(currentUserId)
+        joinedEventsListener=db.collection("users").document(currentUserId!!)
             .collection("joinedEvents")
             .addSnapshotListener { snapshots, _ ->
                 _userProfile.value = _userProfile.value.copy(eventsCount = snapshots?.size() ?: 0)
             }
+    }
+
+    fun clearDataAndListeners() {
+        profileListener?.remove()
+        joinedEventsListener?.remove()
+        _userProfile.value = UserProfile() // Reset to default state
     }
 }

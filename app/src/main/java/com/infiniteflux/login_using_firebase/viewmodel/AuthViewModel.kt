@@ -142,6 +142,11 @@ class AuthViewModel : ViewModel() {
             }
     }
 
+    // --- 2. Add a function to explicitly enter guest mode ---
+    fun enterGuestMode() {
+        _authState.value = AuthState.Guest
+    }
+
 
     fun signout(){
         auth.signOut()
@@ -155,5 +160,6 @@ sealed class AuthState {
     // --- CHANGE 6: Add a new state for users who need to verify their email ---
     object NeedsVerification : AuthState()
     object Loading : AuthState()
+    object Guest : AuthState()
     data class Error(val message: String) : AuthState()
 }

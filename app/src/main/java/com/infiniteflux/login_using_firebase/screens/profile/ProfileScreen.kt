@@ -31,13 +31,19 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 
 @Composable
 fun ProfileScreen(
     navController: NavController,
     viewModel: ProfileViewModel,
-    authViewModel: AuthViewModel // Get instance of AuthViewModel for logout
+    authViewModel: AuthViewModel,// Get instance of AuthViewModel for logout
+    chatViewModel: ChatViewModel,
+    eventsViewModel: EventsViewModel,
+    homeViewModel: HomeViewModel
 ) {
     val user by viewModel.userProfile.collectAsState()
 
@@ -125,9 +131,21 @@ fun ProfileScreen(
                 ActionItem(icon = Icons.Default.Flag, text = "Report a User", onClick = {})
                 ActionItem(icon = Icons.Default.Palette, text = "Theme", trailingText = "Light", onClick = {})
                 ActionItem(icon = Icons.Default.Settings, text = "Settings", onClick = {})
-                ActionItem(icon = Icons.AutoMirrored.Filled.Logout, text = "Logout", color = Color.Red, onClick = {
-                    authViewModel.signout()
-                })
+                ActionItem(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    text = "Logout",
+                    color = Color.Red,
+                    onClick = {
+                        // --- 2. Clear all data BEFORE signing out ---
+                        chatViewModel.clearDataAndListeners()
+                        eventsViewModel.clearDataAndListeners()
+                        homeViewModel.clearDataAndListeners()
+                        viewModel.clearDataAndListeners() //  this is profile view model
+
+                        // Now, sign out
+                        authViewModel.signout()
+                    }
+                )
             }
         }
     }

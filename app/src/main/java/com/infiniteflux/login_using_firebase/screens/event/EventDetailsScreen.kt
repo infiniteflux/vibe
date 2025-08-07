@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,13 +27,15 @@ import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 fun EventDetailsScreen(
     navController: NavController,
     eventId: String,
-    viewModel: EventsViewModel
+    viewModel: EventsViewModel,
+    // --- 1. Accept the auth state and the login prompt trigger ---
+    authState: AuthState?,
+    onLoginRequired: () -> Unit
 ) {
     val event = viewModel.findEvent(eventId)
     val joinedEventIds by viewModel.joinedEventIds.collectAsState()
     val isJoined = joinedEventIds.contains(event?.id)
 
-    // --- 1. State to control the visibility of the confirmation dialog ---
     var showCongratsDialog by remember { mutableStateOf(false) }
 
     if (event == null) {
@@ -63,22 +66,25 @@ fun EventDetailsScreen(
         floatingActionButton = {
             Button(
                 onClick = {
-                    // --- 2. Call the ViewModel and show the dialog ---
-                    if (!isJoined) { // Only act if not already joined
-                        viewModel.toggleJoinedStatus(event.id)
-                        showCongratsDialog = true
+                    // --- 2. Check if the user is a guest before allowing them to join ---
+                    if (authState is AuthState.Guest) {
+                        onLoginRequired()
+                    } else {
+                        if (!isJoined) {
+                            viewModel.toggleJoinedStatus(event.id)
+                            showCongratsDialog = true
+                        }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 shape = RoundedCornerShape(50),
-                // --- 3. The button is now disabled if the user has joined ---
-                enabled = !isJoined,
+                // The button is now disabled only if the user is logged in AND has joined
+                enabled = !(authState !is AuthState.Guest && isJoined),
                 colors = if (isJoined) {
                     ButtonDefaults.buttonColors(
                         containerColor = Color.Gray,
-                        // Set disabled color to make it clear
                         disabledContainerColor = Color.Gray.copy(alpha = 0.8f)
                     )
                 } else {
@@ -137,7 +143,6 @@ fun EventDetailsScreen(
         }
     }
 
-    // --- 4. Conditionally show the confirmation dialog ---
     if (showCongratsDialog) {
         AlertDialog(
             onDismissRequest = { showCongratsDialog = false },

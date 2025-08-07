@@ -7,11 +7,17 @@ import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.data.JoinedEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.google.firebase.firestore.ListenerRegistration
 
 class EventsViewModel : ViewModel() {
+
+    private var eventsListener: ListenerRegistration? = null
+    private var joinedEventsListener: ListenerRegistration? = null
+
     private val db = Firebase.firestore
     private val auth = Firebase.auth
-    private val currentUserId = auth.currentUser?.uid
+    private val currentUserId get() = auth.currentUser?.uid
+
 
     // --- State for the list of all events ---
     private val _events = MutableStateFlow<List<Event>>(emptyList())
@@ -22,7 +28,12 @@ class EventsViewModel : ViewModel() {
     val joinedEventIds: StateFlow<Set<String>> = _joinedEventIds
 
     init {
-        // Automatically fetch data when the ViewModel is created
+        // --- THE FIX 1: Fetch public events immediately when the ViewModel is created. ---
+        // This will now work for both guests and logged-in users.
+        fetchEvents()
+    }
+
+    fun initializeData() {
         fetchEvents()
         fetchJoinedEvents()
     }
@@ -69,8 +80,9 @@ class EventsViewModel : ViewModel() {
     /**
      * Fetches all events from the 'events' collection.
      */
-    private fun fetchEvents() {
-        db.collection("events")
+    fun fetchEvents() {
+        eventsListener?.remove()
+        eventsListener = db.collection("events")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
                 _events.value = snapshots.documents.mapNotNull {
@@ -82,10 +94,11 @@ class EventsViewModel : ViewModel() {
     /**
      * Fetches the IDs of all events the current user has joined.
      */
-    private fun fetchJoinedEvents() {
+    fun fetchJoinedEvents() {
+        joinedEventsListener?.remove()
         if (currentUserId == null) return
 
-        db.collection("users").document(currentUserId)
+        joinedEventsListener=db.collection("users").document(currentUserId!!)
             .collection("joinedEvents")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
@@ -107,7 +120,7 @@ class EventsViewModel : ViewModel() {
     fun toggleJoinedStatus(eventId: String) {
         if (currentUserId == null) return
 
-        val eventRef = db.collection("users").document(currentUserId)
+        val eventRef = db.collection("users").document(currentUserId!!)
             .collection("joinedEvents").document(eventId)
 
         if (_joinedEventIds.value.contains(eventId)) {
@@ -117,5 +130,10 @@ class EventsViewModel : ViewModel() {
             // If the user has not joined, create the document to "join"
             eventRef.set(JoinedEvent(eventId = eventId))
         }
+    }
+
+    fun clearDataAndListeners() {
+        joinedEventsListener?.remove()
+        _joinedEventIds.value = emptySet()
     }
 }

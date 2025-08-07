@@ -1,6 +1,5 @@
 package com.infiniteflux.login_using_firebase.screens.event
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,31 +17,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage // <-- 1. Import Coil's AsyncImage
+import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Event
+import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 
 /*
  * =====================================================================================
  * NOTE:
- * This UI is now connected to the dynamic EventsViewModel.
- *
- * 1.  **Add Coil Dependency:** To load images from a URL, you need the Coil library.
- * Add this to your app-level `build.gradle.kts` file:
- * `implementation("io.coil-kt:coil-compose:2.6.0")`
- *
- * 2.  **Navigation Update:** The Event ID is now a String. You must update the
- * navigation route for `EVENT_DETAILS` to accept a String argument.
+ * This UI is now connected to the dynamic EventsViewModel and is aware of guest users.
  * =====================================================================================
  */
 
 @Composable
-fun EventsScreen(navController: NavController, viewModel: EventsViewModel) {
+fun EventsScreen(
+    navController: NavController,
+    viewModel: EventsViewModel,
+    // --- 1. Accept the auth state and the login prompt trigger ---
+    authState: AuthState?,
+    onLoginRequired: () -> Unit
+) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
 
-    // --- 3. Collect both events and the set of joined event IDs ---
     val events by viewModel.events.collectAsState()
     val joinedEventIds by viewModel.joinedEventIds.collectAsState()
 
@@ -67,25 +65,25 @@ fun EventsScreen(navController: NavController, viewModel: EventsViewModel) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(filteredEvents, key = { it.id }) { event ->
-                // --- 4. Determine if the user has joined this event ---
                 val isJoined = joinedEventIds.contains(event.id)
 
                 EventCard(
                     event = event,
-                    isJoined = isJoined, // Pass the joined status
+                    isJoined = isJoined,
                     onCardClicked = {
-                        // The event ID is now a String
                         navController.navigate("${AppRoutes.EVENT_DETAILS}/${event.id}")
                     },
                     onJoinClicked = {
-                        // Add a lambda to handle the join button click
-                        viewModel.toggleJoinedStatus(event.id)
+                        // --- 2. Check if the user is a guest before allowing them to join ---
+                        if (authState is AuthState.Guest) {
+                            onLoginRequired()
+                        } else {
+                            viewModel.toggleJoinedStatus(event.id)
+                        }
                     }
                 )
             }
         }
-        // This was incorrect before, it should use the passed NavController
-        // BottomNavigationBar(navController = navController)
     }
 }
 
@@ -161,9 +159,9 @@ fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) 
 @Composable
 fun EventCard(
     event: Event,
-    isJoined: Boolean, // --- 5. Receive the joined status ---
+    isJoined: Boolean,
     onCardClicked: () -> Unit,
-    onJoinClicked: () -> Unit // --- 6. Receive the join click handler ---
+    onJoinClicked: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -174,20 +172,12 @@ fun EventCard(
     ) {
         Column {
             Box(modifier = Modifier.height(150.dp)) {
-                // --- 7. Use Coil's AsyncImage to load from a URL ---
                 AsyncImage(
                     model = event.imageUrl,
                     contentDescription = event.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // This logic can remain the same if you add 'isCurated' to your Firestore model
-                // For now, it's removed as it's not in the dynamic data class
-                /*
-                if (event.isCurated) {
-                    Text(...)
-                }
-                */
             }
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(event.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
@@ -209,11 +199,8 @@ fun EventCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // This data is not in the new model, can be added later
-                    // Text("${event.joinedCount}/${event.totalCount} joined", ...)
                     Spacer(modifier = Modifier.weight(1f))
                     Button(
-                        // --- 8. Connect the button's onClick ---
                         onClick = onJoinClicked,
                         shape = RoundedCornerShape(50),
                         colors = if (isJoined) {

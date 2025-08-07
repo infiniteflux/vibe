@@ -17,37 +17,39 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.R
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
+import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 
 @Composable
-fun SplashScreen(navController: NavController) {
+fun SplashScreen(navController: NavController, authViewModel: AuthViewModel) {
     val scale = remember { Animatable(0f) }
 
-    // This effect runs once when the composable enters the screen
+    // This effect runs once to perform the animation and trigger the auth check.
     LaunchedEffect(key1 = true) {
-        // Animate the scale of the logo from 0f to 1f
+        // Animate the logo scale
         scale.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 800)
         )
-        // Wait for 1.2 seconds
-        delay(1200L)
-        // Navigate to the login screen and clear the back stack
-        navController.navigate(AppRoutes.LOGIN) {
-            popUpTo(AppRoutes.SPLASH) { inclusive = true }
-        }
+        // Wait a moment after the animation
+        delay(20000L) // A 1.5 second delay for a smoother feel
+
+        // --- THE FIX ---
+        // Trigger the authentication check. The LaunchedEffect in NavigationScreen
+        // will see the state change and handle all the navigation logic.
+        authViewModel.checkAuthState()
     }
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black) // Match the logo's background
+            .background(Color.Black)
     ) {
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -63,6 +65,6 @@ fun SplashScreen(navController: NavController) {
 @Composable
 fun SplashScreenPreview() {
     Login_Using_FirebaseTheme {
-        SplashScreen(navController = rememberNavController())
+        SplashScreen(navController = rememberNavController(), authViewModel = viewModel())
     }
 }

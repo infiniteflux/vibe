@@ -1,12 +1,9 @@
 package com.infiniteflux.login_using_firebase.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.DocumentId
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.ServerTimestamp // <-- 1. Import ServerTimestamp
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.infiniteflux.login_using_firebase.data.Group
@@ -14,15 +11,21 @@ import com.infiniteflux.login_using_firebase.data.GroupReadStatus
 import com.infiniteflux.login_using_firebase.data.Message
 import com.infiniteflux.login_using_firebase.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.StateFlow
 
 
 // --- The ViewModel Class ---
 class ChatViewModel : ViewModel() {
+    // --- 2. Store your listeners in variables ---
+    private var groupsListener: ListenerRegistration? = null
+    private var readStatusListener: ListenerRegistration? = null
+    private var messagesListener: ListenerRegistration? = null
+
 
     private val db = Firebase.firestore
     private val auth = Firebase.auth
-    val currentUserId = auth.currentUser?.uid
+    val currentUserId get() = auth.currentUser?.uid
 
     private val _groups = MutableStateFlow<List<Group>>(emptyList())
     val groups: StateFlow<List<Group>> = _groups
@@ -39,6 +42,11 @@ class ChatViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading
+
+    fun initializeData() {
+        fetchUserGroups()
+        fetchGroupReadStatuses()
+    }
 
     fun fetchAllUsers() {
         db.collection("users")
@@ -65,19 +73,20 @@ class ChatViewModel : ViewModel() {
         val newGroup = Group(
             name = groupName,
             relatedEvent = relatedEvent,
-            memberIds = listOf(currentUserId),
+            memberIds = listOf(currentUserId!!),
             groupAvatarUrl = "https://avatars.githubusercontent.com/u/147044141?s=400&u=0848775e883324ec1bd028ca3a7bc3ded25a0f18&v=4"
         )
         db.collection("groups").add(newGroup)
     }
 
     fun fetchUserGroups() {
+        _isLoading.value = true
         if (currentUserId == null) {
             _isLoading.value = false
             return
         }
-        db.collection("groups")
-            .whereArrayContains("memberIds", currentUserId)
+        groupsListener = db.collection("groups")
+            .whereArrayContains("memberIds", currentUserId!!)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.w("ChatViewModel", "Error fetching groups: ", error)
@@ -94,7 +103,7 @@ class ChatViewModel : ViewModel() {
     }
 
     fun listenForMessages(groupId: String) {
-        db.collection("groups").document(groupId)
+        messagesListener=db.collection("groups").document(groupId)
             .collection("messages")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
@@ -110,7 +119,7 @@ class ChatViewModel : ViewModel() {
         if (currentUserId == null || text.isBlank()) return
         val message = Message(
             text = text,
-            senderId = currentUserId,
+            senderId = currentUserId!!,
             senderName = senderName
         )
         val groupRef = db.collection("groups").document(groupId)
@@ -126,7 +135,7 @@ class ChatViewModel : ViewModel() {
     fun markGroupAsRead(groupId: String) {
         if (currentUserId == null) return
 
-        val readStatusRef = db.collection("users").document(currentUserId)
+        val readStatusRef = db.collection("users").document(currentUserId!!)
             .collection("groupReadStatus").document(groupId)
         readStatusRef.set(mapOf("lastReadTimestamp" to FieldValue.serverTimestamp()))
     }
@@ -134,7 +143,7 @@ class ChatViewModel : ViewModel() {
     fun fetchGroupReadStatuses() {
         if (currentUserId == null) return
 
-        db.collection("users").document(currentUserId)
+        readStatusListener=db.collection("users").document(currentUserId!!)
             .collection("groupReadStatus")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
@@ -144,4 +153,15 @@ class ChatViewModel : ViewModel() {
                 _groupReadStatus.value = statusMap
             }
     }
+
+    // --- 4. Add a function to clear data and remove listeners ---
+    fun clearDataAndListeners() {
+        groupsListener?.remove()
+        readStatusListener?.remove()
+        messagesListener?.remove()
+        _groups.value = emptyList()
+        _groupReadStatus.value = emptyMap()
+        _messages.value = emptyList()
+    }
+
 }
