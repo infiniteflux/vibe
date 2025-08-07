@@ -26,13 +26,15 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
+import com.infiniteflux.login_using_firebase.viewmodel.ReportedUser
+import com.infiniteflux.login_using_firebase.viewmodel.WallOfShameViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewModel) {
     Scaffold(
         topBar = {
-            // FIX: Replaced TopAppBar with a custom Row for precise layout control.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -159,7 +161,8 @@ fun ReportedUserCard(user: ReportedUser) {
                     AssistChip(
                         onClick = { },
                         label = { Text(reason) },
-                        border = AssistChipDefaults.assistChipBorder(borderColor = Color.Gray)
+                        // FIX: Replaced AssistChipDefaults.assistChipBorder with a direct BorderStroke
+                        border = BorderStroke(1.dp, Color.Gray)
                     )
                 }
             }
@@ -222,7 +225,7 @@ fun SubmitReportCard() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun WallOfShameScreenPreview() {
-    VibeWithMeTheme {
+    Login_Using_FirebaseTheme {
         WallOfShameScreen(navController = rememberNavController(), viewModel = viewModel())
     }
 }

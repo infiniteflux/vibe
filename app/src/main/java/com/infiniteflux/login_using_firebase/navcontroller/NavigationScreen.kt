@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
@@ -22,6 +23,7 @@ import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
 import com.infiniteflux.login_using_firebase.screens.login.VerificationScreen
 import com.infiniteflux.login_using_firebase.screens.profile.EditProfileScreen
+import com.infiniteflux.login_using_firebase.screens.profile.WallOfShame.WallOfShameScreen
 import com.infiniteflux.login_using_firebase.screens.profile.connection.ConnectionScreen
 import com.infiniteflux.login_using_firebase.viewmodel.*
 
@@ -30,7 +32,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                      chatViewModel: ChatViewModel, eventsViewModel: EventsViewModel,
                      profileViewModel: ProfileViewModel,
                      homeViewModel: HomeViewModel,
-                     connectionViewModel: ConnectionViewModel
+                     connectionViewModel: ConnectionViewModel,
+                     wallOfShameViewModel: WallOfShameViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -203,6 +206,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
 
                 composable(AppRoutes.CONNECTION){
                     ConnectionScreen(navController = navController, viewModel = connectionViewModel)
+                }
+
+                composable(AppRoutes.WALLOFSHAME){
+                    WallOfShameScreen(navController = navController, viewModel= wallOfShameViewModel)
                 }
             }
 
