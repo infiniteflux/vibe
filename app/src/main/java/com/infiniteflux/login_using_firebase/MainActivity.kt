@@ -60,7 +60,8 @@ class MainActivity : ComponentActivity() {
                     chatViewModel = chatViewModel,
                     profileViewModel = profileViewModel,
                     homeViewModel = homeViewModel,
-                    connectionViewModel = connectionViewModel
+                    connectionViewModel = connectionViewModel,
+                    wallOfShameViewModel = WallOfShameViewModel
                 )
             }
         }
