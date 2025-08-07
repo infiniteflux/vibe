@@ -38,7 +38,6 @@ fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewMo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .statusBarsPadding()
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
