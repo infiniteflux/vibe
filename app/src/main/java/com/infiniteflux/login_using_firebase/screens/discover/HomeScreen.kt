@@ -1,5 +1,6 @@
 package com.infiniteflux.login_using_firebase.screens.discover
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,9 +13,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,29 +27,64 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Event
+import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(navController: NavController, viewModel: HomeViewModel) {
-    // Collect the dynamic data from the ViewModel
+fun HomeScreen(
+    navController: NavController,
+    viewModel: HomeViewModel,
+    authViewModel: AuthViewModel // 1. Add AuthViewModel
+) {
     val userName by viewModel.userName.collectAsState()
     val eventsCount by viewModel.eventsCount.collectAsState()
     val trendingEvents by viewModel.trendingEvents.collectAsState()
 
+    // --- 2. Observe the user's role and add state for the dialog ---
+    val userRole by authViewModel.userRole.observeAsState("user")
+    var showPermissionDeniedDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
             .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
         TopBar(userName = userName)
-        Spacer(modifier = Modifier.height(16.dp))
-        StatsSection(eventsCount = eventsCount)
-        Spacer(modifier = Modifier.height(24.dp))
-        TrendingEventsSection(navController = navController, trendingEvents = trendingEvents)
-        Spacer(modifier = Modifier.height(24.dp))
-        QuickActionsSection(navController)
-        Spacer(modifier = Modifier.height(24.dp))
-        StaySafeSection()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+            StatsSection(eventsCount = eventsCount)
+            Spacer(modifier = Modifier.height(24.dp))
+            TrendingEventsSection(navController = navController, trendingEvents = trendingEvents)
+            Spacer(modifier = Modifier.height(24.dp))
+            // --- 3. Pass the role and dialog trigger to the QuickActionsSection ---
+            QuickActionsSection(
+                navController = navController,
+                userRole = userRole,
+                onPermissionDenied = { showPermissionDeniedDialog = true }
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            StaySafeSection()
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+
+    // --- 4. Add the permission denied dialog ---
+    if (showPermissionDeniedDialog) {
+        AlertDialog(
+            onDismissRequest = { showPermissionDeniedDialog = false },
+            title = { Text("Feature for Creators Only") },
+            text = { Text("Creating new events is currently limited to users with the 'creator' role.") },
+            confirmButton = {
+                Button(onClick = { showPermissionDeniedDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }
 
@@ -139,11 +174,9 @@ fun TrendingEventsSection(navController: NavController, trendingEvents: List<Eve
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        // Show the first trending event, or a placeholder if the list is empty
         if (trendingEvents.isNotEmpty()) {
             TrendingEventCard(event = trendingEvents.first())
         } else {
-            // You can add a placeholder card here for when the data is loading
             Text("Loading trending events...", color = Color.Gray)
         }
     }
@@ -197,8 +230,13 @@ fun TrendingEventCard(event: Event) {
     }
 }
 
+// --- 5. Update the QuickActionsSection function signature ---
 @Composable
-fun QuickActionsSection(navController: NavController) {
+fun QuickActionsSection(
+    navController: NavController,
+    userRole: String,
+    onPermissionDenied: () -> Unit
+) {
     Column {
         Text(
             text = "⚡ Quick Actions",
@@ -209,9 +247,21 @@ fun QuickActionsSection(navController: NavController) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.CREATE_EVENT)  }, "Create Event", Icons.Default.AddCircle, Color(0xFF4CAF50))
+            // --- 6. Update the onClick logic for the "Create Event" card ---
+            QuickActionCard(
+                onClickAction = {
+                    if (userRole == "creator") {
+                        navController.navigate(AppRoutes.CREATE_EVENT)
+                    } else {
+                        onPermissionDenied()
+                    }
+                },
+                "Create Event",
+                Icons.Default.AddCircle,
+                Color(0xFF4CAF50)
+            )
             QuickActionCard(onClickAction = { navController.navigate(AppRoutes.CHATS) }, "Group Chats", Icons.Outlined.Group, Color(0xFF2196F3))
-            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.PROFILE) }, "Connections", Icons.Default.Favorite, Color(0xFFE91E63))
+            QuickActionCard(onClickAction = { navController.navigate(AppRoutes.CONNECTION) }, "Connections", Icons.Default.Favorite, Color(0xFFE91E63))
         }
     }
 }
@@ -257,14 +307,12 @@ fun StaySafeSection() {
                 imageVector = Icons.Default.Shield,
                 contentDescription = "Safety Shield",
                 tint = Color(0xFF4CAF50),
-                modifier = Modifier.align(Alignment.Top) // Align icon to top for better look with scrolling text
+                modifier = Modifier.align(Alignment.Top)
             )
             Spacer(modifier = Modifier.width(16.dp))
-            // FIX: Added a fixed height and vertical scroll to the text column
             Column(
                 modifier = Modifier
-                    .height(50.dp) // This fixed height ensures the card size doesn't change
-                    .verticalScroll(rememberScrollState()) // This makes the content scrollable
+                    .height(105.dp)
             ) {
                 Text(
                     text = "Stay Safe Out There!",
@@ -272,7 +320,6 @@ fun StaySafeSection() {
                     color = Color(0xFF2E7D32)
                 )
                 Text(
-                    // Added more text to demonstrate scrolling
                     text = "Always meet in public places and trust your instincts. Report any concerns immediately. If you ever feel unsafe, don't hesitate to contact local authorities. Your safety is the top priority. Be aware of your surroundings and let a friend know where you are going.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF2E7D32)

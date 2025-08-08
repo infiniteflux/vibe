@@ -1,4 +1,5 @@
 package com.infiniteflux.login_using_firebase.screens.chat
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -6,14 +7,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
-// --- FIX: Added missing imports ---
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
-// --- END FIX ---
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,7 +25,6 @@ import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.User
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
- // <-- FIX: Import User class
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,7 +33,6 @@ fun GroupInfoScreen(
     groupId: String,
     viewModel: ChatViewModel = viewModel()
 ) {
-    // Fetch all users to find member details
     LaunchedEffect(Unit) {
         viewModel.fetchAllUsers()
     }
@@ -50,14 +47,22 @@ fun GroupInfoScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(group?.name ?: "Group Info") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp), // Your desired padding
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-            )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = group?.name ?: "Group Info",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     ) { padding ->
         Column(
@@ -76,7 +81,6 @@ fun GroupInfoScreen(
             Text("Members", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Filter all users to get just the members of this group
             val members = group?.memberIds?.mapNotNull { memberId ->
                 allUsers.find { it.id == memberId }
             } ?: emptyList()
