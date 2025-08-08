@@ -3,8 +3,6 @@ package com.infiniteflux.login_using_firebase.data
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.ServerTimestamp
 
-
-
 data class Event(
     val id: String = "",
     val title: String = "",

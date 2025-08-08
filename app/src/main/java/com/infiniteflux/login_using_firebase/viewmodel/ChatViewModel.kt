@@ -1,4 +1,5 @@
 package com.infiniteflux.login_using_firebase.viewmodel
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.ktx.auth
@@ -12,7 +13,9 @@ import com.infiniteflux.login_using_firebase.data.Message
 import com.infiniteflux.login_using_firebase.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.storage.ktx.storage
 import kotlinx.coroutines.flow.StateFlow
+import java.util.UUID
 
 
 // --- The ViewModel Class ---
@@ -25,6 +28,7 @@ class ChatViewModel : ViewModel() {
 
     private val db = Firebase.firestore
     private val auth = Firebase.auth
+    private val storage = Firebase.storage
     val currentUserId get() = auth.currentUser?.uid
 
     private val _groups = MutableStateFlow<List<Group>>(emptyList())
@@ -67,16 +71,46 @@ class ChatViewModel : ViewModel() {
     }
 
 
-    fun createGroup(groupName: String, relatedEvent: String) {
+    fun createGroup(
+        groupName: String,
+        relatedEvent: String,
+        imageUri: Uri?,
+        onSuccess: () -> Unit
+    ) {
         if (currentUserId == null || groupName.isBlank()) return
 
-        val newGroup = Group(
-            name = groupName,
-            relatedEvent = relatedEvent,
-            memberIds = listOf(currentUserId!!),
-            groupAvatarUrl = "https://avatars.githubusercontent.com/u/147044141?s=400&u=0848775e883324ec1bd028ca3a7bc3ded25a0f18&v=4"
-        )
-        db.collection("groups").add(newGroup)
+        // If no image is selected, use a default placeholder and create the group
+        if (imageUri == null) {
+            val newGroup = Group(
+                name = groupName,
+                relatedEvent = relatedEvent,
+                memberIds = listOf(currentUserId!!),
+                groupAvatarUrl = "https://placehold.co/100"
+            )
+            db.collection("groups").add(newGroup).addOnSuccessListener { onSuccess() }
+            return
+        }
+
+        // If an image is selected, upload it first
+        val imageFileName = UUID.randomUUID().toString()
+        val storageRef = storage.reference.child("group_avatars/$imageFileName.jpg")
+
+        storageRef.putFile(imageUri)
+            .addOnSuccessListener {
+                // After upload, get the download URL
+                storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                    val newGroup = Group(
+                        name = groupName,
+                        relatedEvent = relatedEvent,
+                        memberIds = listOf(currentUserId!!),
+                        groupAvatarUrl = downloadUrl.toString()
+                    )
+                    db.collection("groups").add(newGroup).addOnSuccessListener { onSuccess() }
+                }
+            }
+            .addOnFailureListener {
+                // Handle upload failure
+            }
     }
 
     fun fetchUserGroups() {
@@ -101,6 +135,7 @@ class ChatViewModel : ViewModel() {
                 _isLoading.value = false
             }
     }
+
 
     fun listenForMessages(groupId: String) {
         messagesListener=db.collection("groups").document(groupId)

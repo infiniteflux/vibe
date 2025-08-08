@@ -165,7 +165,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 ) { backStackEntry ->
                     val groupId = backStackEntry.arguments?.getString("groupId")
                     if (groupId != null) {
-                        GroupInfoScreen(navController = navController, groupId = groupId, viewModel = chatViewModel)
+                        GroupInfoScreen(navController = navController, groupId = groupId, viewModel = chatViewModel,authViewModel=authViewModel)
                     }
                 }
                 composable(

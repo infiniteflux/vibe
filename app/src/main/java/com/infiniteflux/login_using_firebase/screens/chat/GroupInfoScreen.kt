@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.ui.Alignment
@@ -19,11 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.User
+import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,26 +32,28 @@ import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 fun GroupInfoScreen(
     navController: NavController,
     groupId: String,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel,
+    authViewModel: AuthViewModel // 1. Get AuthViewModel
 ) {
     LaunchedEffect(Unit) {
         viewModel.fetchAllUsers()
     }
 
     val allUsers by viewModel.allUsers.collectAsState()
-    // Find the current group from the list of groups
     val group by viewModel.groups.collectAsState().let { groupsState ->
         remember(groupsState) {
             derivedStateOf { groupsState.value.find { it.id == groupId } }
         }
     }
+    // 2. Observe the user's role
+    val userRole by authViewModel.userRole.observeAsState("user")
 
     Scaffold(
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp), // Your desired padding
+                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
@@ -71,13 +74,16 @@ fun GroupInfoScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Button(onClick = {
-                // Navigate to the Add Member screen
-                navController.navigate("${AppRoutes.ADD_MEMBER_TO_GROUP}/$groupId")
-            }) {
-                Text("Add Member")
+            // 3. Only show the "Add Member" button if the user is a creator
+            if (userRole == "creator") {
+                Button(onClick = {
+                    navController.navigate("${AppRoutes.ADD_MEMBER_TO_GROUP}/$groupId")
+                }) {
+                    Text("Add Member")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
             Text("Members", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -95,9 +101,9 @@ fun GroupInfoScreen(
 }
 
 @Composable
-fun MemberListItem(member: User, modifier: Modifier = Modifier) { // Added modifier parameter
+fun MemberListItem(member: User, modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier // Applied modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically

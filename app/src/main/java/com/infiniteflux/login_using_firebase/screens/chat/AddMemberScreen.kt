@@ -27,7 +27,7 @@ import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 fun AddMemberScreen(
     navController: NavController,
     groupId: String,
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel
 ) {
     LaunchedEffect(Unit) {
         viewModel.fetchAllUsers()

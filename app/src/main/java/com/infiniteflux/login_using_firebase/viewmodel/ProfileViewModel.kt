@@ -13,9 +13,6 @@ import com.google.firebase.firestore.ListenerRegistration
 
 class ProfileViewModel : ViewModel() {
 
-    private var profileListener: ListenerRegistration? = null
-    private var joinedEventsListener: ListenerRegistration? = null
-
     private val auth = Firebase.auth
     private val db = Firebase.firestore
     private val storage = Firebase.storage
@@ -24,57 +21,49 @@ class ProfileViewModel : ViewModel() {
     private val _userProfile = MutableStateFlow(UserProfile())
     val userProfile: StateFlow<UserProfile> = _userProfile
 
+    // --- 1. NEW: State to hold all event IDs and joined event IDs ---
+    private val _allEventIds = MutableStateFlow<Set<String>>(emptySet())
+    private val _joinedEventIds = MutableStateFlow<Set<String>>(emptySet())
+
+    private var profileListener: ListenerRegistration? = null
+    private var joinedEventsListener: ListenerRegistration? = null
+    private var allEventsListener: ListenerRegistration? = null
+
+
     fun initializeData() {
         fetchUserProfile()
+        fetchAllEventIds()
+        fetchJoinedEvents()
     }
 
-    // --- 3. NEW FUNCTION TO UPLOAD THE IMAGE AND UPDATE THE PROFILE ---
     fun uploadProfileImage(imageUri: Uri) {
         if (currentUserId == null) return
-
-        // Create a reference to the location where the image will be stored
         val storageRef = storage.reference.child("profile_images/$currentUserId.jpg")
-
-        // Upload the file
         storageRef.putFile(imageUri)
             .addOnSuccessListener {
-                // After upload is successful, get the public download URL
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                    // Save the new URL to the user's document in Firestore
                     db.collection("users").document(currentUserId!!)
                         .update("avatarUrl", downloadUrl.toString())
                 }
             }
-            .addOnFailureListener {
-                // Handle any errors during upload
-            }
     }
 
-    // --- NEW FUNCTION TO UPDATE THE USER'S PROFILE ---
     fun updateUserProfile(newName: String, newAboutMe: String, newInterests: List<String>) {
         if (currentUserId == null) return
-
         val userDocRef = db.collection("users").document(currentUserId!!)
         val updates = mapOf(
             "name" to newName,
             "aboutMe" to newAboutMe,
             "interests" to newInterests
         )
-
         userDocRef.update(updates)
-            .addOnSuccessListener {
-                // Optionally provide success feedback
-            }
-            .addOnFailureListener {
-                // Optionally provide error feedback
-            }
     }
 
-    fun fetchUserProfile() {
+    private fun fetchUserProfile() {
         if (currentUserId == null) return
         _userProfile.value = _userProfile.value.copy(email = auth.currentUser?.email ?: "")
 
-        profileListener=db.collection("users").document(currentUserId!!)
+        profileListener = db.collection("users").document(currentUserId!!)
             .addSnapshotListener { document, _ ->
                 if (document == null) return@addSnapshotListener
                 val name = document.getString("name") ?: "No Name"
@@ -89,17 +78,44 @@ class ProfileViewModel : ViewModel() {
                     interestsCount = interests.size
                 )
             }
+    }
 
-        joinedEventsListener=db.collection("users").document(currentUserId!!)
-            .collection("joinedEvents")
-            .addSnapshotListener { snapshots, _ ->
-                _userProfile.value = _userProfile.value.copy(eventsCount = snapshots?.size() ?: 0)
+    private fun fetchAllEventIds() {
+        allEventsListener?.remove()
+        allEventsListener = db.collection("events").addSnapshotListener { snapshots, _ ->
+            if (snapshots != null) {
+                _allEventIds.value = snapshots.documents.map { it.id }.toSet()
+                updateJoinedEventsCount() // Recalculate count when the events list changes
             }
+        }
+    }
+
+    private fun fetchJoinedEvents() {
+        if (currentUserId != null) {
+            joinedEventsListener?.remove()
+            joinedEventsListener = db.collection("users").document(currentUserId!!)
+                .collection("joinedEvents")
+                .addSnapshotListener { snapshots, _ ->
+                    if (snapshots != null) {
+                        _joinedEventIds.value = snapshots.documents.map { it.id }.toSet()
+                        updateJoinedEventsCount() // Recalculate count when joined events change
+                    }
+                }
+        }
+    }
+
+    // --- 2. NEW: Function to calculate the correct count ---
+    private fun updateJoinedEventsCount() {
+        val existingJoinedEvents = _joinedEventIds.value.intersect(_allEventIds.value)
+        _userProfile.value = _userProfile.value.copy(eventsCount = existingJoinedEvents.size)
     }
 
     fun clearDataAndListeners() {
         profileListener?.remove()
         joinedEventsListener?.remove()
+        allEventsListener?.remove()
         _userProfile.value = UserProfile() // Reset to default state
+        _allEventIds.value = emptySet()
+        _joinedEventIds.value = emptySet()
     }
 }

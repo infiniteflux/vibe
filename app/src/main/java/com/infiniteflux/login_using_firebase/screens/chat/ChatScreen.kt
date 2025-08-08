@@ -1,5 +1,9 @@
 package com.infiniteflux.login_using_firebase.screens.chat
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,22 +44,17 @@ import java.util.*
 fun ChatScreen(
     navController: NavController,
     viewModel: ChatViewModel = viewModel(),
-    authViewModel: AuthViewModel = viewModel() // 1. Get the AuthViewModel
+    authViewModel: AuthViewModel = viewModel()
 ) {
     LaunchedEffect(key1 = Unit) {
-        viewModel.fetchUserGroups()
-        viewModel.fetchGroupReadStatuses()
+        viewModel.initializeData()
     }
 
     val groups by viewModel.groups.collectAsState()
     val readStatuses by viewModel.groupReadStatus.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
-
-    // --- 2. Add state for both dialogs ---
     var showCreateGroupDialog by remember { mutableStateOf(false) }
     var showPermissionDeniedDialog by remember { mutableStateOf(false) }
-
-    // --- 3. Observe the user's role from the AuthViewModel ---
     val userRole by authViewModel.userRole.observeAsState("user")
 
     Scaffold(
@@ -71,7 +71,6 @@ fun ChatScreen(
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 IconButton(onClick = {
-                    // --- 4. Check the role before showing a dialog ---
                     if (userRole == "creator") {
                         showCreateGroupDialog = true
                     } else {
@@ -122,14 +121,14 @@ fun ChatScreen(
     if (showCreateGroupDialog) {
         CreateGroupDialog(
             onDismiss = { showCreateGroupDialog = false },
-            onCreate = { groupName, relatedEvent ->
-                viewModel.createGroup(groupName, relatedEvent)
-                showCreateGroupDialog = false
+            onCreate = { groupName, relatedEvent, imageUri ->
+                viewModel.createGroup(groupName, relatedEvent, imageUri) {
+                    showCreateGroupDialog = false
+                }
             }
         )
     }
 
-    // --- 5. The new, improved dialog for non-creators ---
     if (showPermissionDeniedDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDeniedDialog = false },
@@ -155,16 +154,43 @@ fun ChatScreen(
 @Composable
 private fun CreateGroupDialog(
     onDismiss: () -> Unit,
-    onCreate: (String, String) -> Unit
+    onCreate: (String, String, Uri?) -> Unit
 ) {
     var groupName by remember { mutableStateOf("") }
     var relatedEvent by remember { mutableStateOf("") }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Create New Group") },
         text = {
-            Column {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, Color.Gray, CircleShape)
+                        .clickable { imagePickerLauncher.launch("image/*") },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (imageUri != null) {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = "Selected group image",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Add image", tint = Color.Gray)
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = groupName,
                     onValueChange = { groupName = it },
@@ -182,7 +208,7 @@ private fun CreateGroupDialog(
         },
         confirmButton = {
             Button(
-                onClick = { onCreate(groupName, relatedEvent) },
+                onClick = { onCreate(groupName, relatedEvent, imageUri) },
                 enabled = groupName.isNotBlank()
             ) {
                 Text("Create")
@@ -195,7 +221,6 @@ private fun CreateGroupDialog(
         }
     )
 }
-
 
 @Composable
 private fun ChatListItem(group: Group, isUnread: Boolean, onClick: () -> Unit) {
