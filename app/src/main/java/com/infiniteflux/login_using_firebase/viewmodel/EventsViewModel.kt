@@ -98,25 +98,38 @@ class EventsViewModel : ViewModel() {
 
         return try {
             val document = otherUserRatingRef.get().await()
-            if (document.exists()) {
-                val theirRatings = document.get("ratings") as? Map<String, String> ?: emptyMap()
-                val theirRatingForMe = theirRatings[currentUserId!!]
+            if (!document.exists()) {
+                // Case 1: They haven't rated anyone yet.
+                return MatchResult.Pending
+            }
 
-                if (theirRatingForMe != null && theirRatingForMe == myRating) {
+            val theirRatings = document.get("ratings") as? Map<String, String> ?: emptyMap()
+            val theirRatingForMe = theirRatings[currentUserId!!]
+
+            when (theirRatingForMe) {
+                myRating -> {
+                    // Case 2: It's a match! Create the connection.
+                    Log.d("EventsViewModel", "Mutual match found! Creating connection.")
                     val connection = Connection(eventId = eventId)
                     db.collection("users").document(currentUserId!!).collection("connections").document(otherUserId).set(connection).await()
                     db.collection("users").document(otherUserId).collection("connections").document(currentUserId!!).set(connection).await()
-                    MatchResult.Match // It's a match!
-                } else {
-                    MatchResult.NoMatch // They rated differently
+                    MatchResult.Match
                 }
-            } else {
-                MatchResult.Pending // They haven't rated yet
+                null -> {
+                    // Case 3: They have rated others, but not me yet.
+                    MatchResult.Pending
+                }
+                else -> {
+                    // Case 4: They rated me, but it's a different rating. No connection.
+                    MatchResult.NoMatch
+                }
             }
         } catch (e: Exception) {
+            Log.e("EventsViewModel", "Error checking for mutual connection", e)
             MatchResult.NoMatch // Handle any errors
         }
     }
+
 
     // --- 2. UPDATED createEvent function to handle image upload ---
     fun createEvent(
