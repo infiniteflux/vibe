@@ -37,6 +37,7 @@ object AppRoutes {
     const val SPLASH = "SplashScreen"
     const val CONNECTION = "Connection"
     const val WALLOFSHAME = "Wall Of Shame"
+    const val RATE_ATTENDEES= "Rate_Attendees"
 }
 
 class MainActivity : ComponentActivity() {

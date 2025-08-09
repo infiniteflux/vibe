@@ -18,6 +18,7 @@ import com.infiniteflux.login_using_firebase.screens.event.EventsScreen
 import com.infiniteflux.login_using_firebase.screens.discover.HomeScreen
 import com.infiniteflux.login_using_firebase.screens.discover.SplashScreen
 import com.infiniteflux.login_using_firebase.screens.event.CreateEventScreen
+import com.infiniteflux.login_using_firebase.screens.event.RateAttendeesScreen
 import com.infiniteflux.login_using_firebase.screens.login.LoginScreen
 import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
@@ -210,6 +211,16 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
 
                 composable(AppRoutes.WALLOFSHAME){
                     WallOfShameScreen(navController = navController, viewModel= wallOfShameViewModel)
+                }
+
+                composable(
+                    route = "${AppRoutes.RATE_ATTENDEES}/{eventId}",
+                    arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val eventId = backStackEntry.arguments?.getString("eventId")
+                    if (eventId != null) {
+                        RateAttendeesScreen(navController = navController, eventId = eventId)
+                    }
                 }
             }
 

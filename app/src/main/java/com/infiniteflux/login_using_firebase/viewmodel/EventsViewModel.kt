@@ -1,13 +1,18 @@
 package com.infiniteflux.login_using_firebase.viewmodel
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.data.JoinedEvent
+import com.infiniteflux.login_using_firebase.data.User
+import com.infiniteflux.login_using_firebase.data.EventRating
+import com.infiniteflux.login_using_firebase.data.Connection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
@@ -36,6 +41,59 @@ class EventsViewModel : ViewModel() {
         fetchJoinedEvents()
     }
 
+    fun getAttendees(eventId: String, onResult: (List<User>) -> Unit) {
+        if (currentUserId == null) return
+        // First, get the list of joined user IDs from the event
+        db.collection("users")
+            .whereArrayContains("joinedEvents", eventId) // Assuming you add this field to user docs
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val users = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
+                // Filter out the current user from the list
+                onResult(users.filter { it.id != currentUserId })
+            }
+    }
+
+    // --- NEW: Function to submit a rating and check for a match ---
+    fun submitRating(eventId: String, ratedUserId: String, rating: String) {
+        if (currentUserId == null) return
+
+        val currentUserRatingRef = db.collection("events").document(eventId)
+            .collection("ratings").document(currentUserId!!)
+
+        // Save the current user's rating
+        currentUserRatingRef.set(mapOf("ratings.$ratedUserId" to rating), SetOptions.merge())
+            .addOnSuccessListener {
+                // After saving, check for a mutual match
+                checkForMutualConnection(eventId, ratedUserId, rating)
+            }
+    }
+
+    private fun checkForMutualConnection(eventId: String, otherUserId: String, myRating: String) {
+        if (currentUserId == null) return
+
+        val otherUserRatingRef = db.collection("events").document(eventId)
+            .collection("ratings").document(otherUserId)
+
+        otherUserRatingRef.get().addOnSuccessListener { document ->
+            val theirRatings = document.toObject(EventRating::class.java)?.ratings ?: emptyMap()
+            val theirRatingForMe = theirRatings[currentUserId!!]
+
+            // If they rated me and the ratings match, create a connection!
+            if (theirRatingForMe != null && theirRatingForMe == myRating) {
+                val connection = Connection(eventId = eventId, connectedAt = Timestamp.now())
+
+                // Add connection for both users
+                db.collection("users").document(currentUserId!!)
+                    .collection("connections").document(otherUserId).set(connection)
+
+                db.collection("users").document(otherUserId)
+                    .collection("connections").document(currentUserId!!).set(connection)
+            }
+        }
+    }
+
+
     // --- 2. UPDATED createEvent function to handle image upload ---
     fun createEvent(
         title: String,
@@ -43,6 +101,7 @@ class EventsViewModel : ViewModel() {
         date: String,
         category: String,
         description: String,
+        durationHours: Int,
         host: String,
         imageUri: Uri?, // Pass the selected image URI
         onSuccess: () -> Unit // Callback to run on success
@@ -55,7 +114,7 @@ class EventsViewModel : ViewModel() {
         if (imageUri == null) {
             val newEvent = Event(
                 title = title, location = location, date = date, category = category,
-                description = description, host = host, imageUrl = "https://placehold.co/600x400"
+                description = description, host = host, durationHours = durationHours, imageUrl = "https://placehold.co/600x400"
             )
             db.collection("events").add(newEvent).addOnSuccessListener { onSuccess() }
             return
@@ -71,7 +130,7 @@ class EventsViewModel : ViewModel() {
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     // Now create the event with the correct image URL
                     val newEvent = Event(
-                        title = title, location = location, date = date, category = category,
+                        title = title, location = location, date = date, category = category, durationHours = durationHours,
                         description = description, host = host, imageUrl = downloadUrl.toString()
                     )
                     db.collection("events").add(newEvent).addOnSuccessListener { onSuccess() }

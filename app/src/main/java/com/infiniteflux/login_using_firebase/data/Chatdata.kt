@@ -7,6 +7,8 @@ data class User(
     val id: String = "",
     val name: String = "",
     val avatarUrl: String = "",
+    val aboutMe: String = "",
+    val interests: List<String> = emptyList(),
     val role: String = "user"
 )
 

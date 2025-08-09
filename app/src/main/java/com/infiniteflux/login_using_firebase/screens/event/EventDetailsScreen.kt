@@ -19,8 +19,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,7 +30,6 @@ fun EventDetailsScreen(
     navController: NavController,
     eventId: String,
     viewModel: EventsViewModel,
-    // --- 1. Accept the auth state and the login prompt trigger ---
     authState: AuthState?,
     onLoginRequired: () -> Unit
 ) {
@@ -64,39 +65,56 @@ fun EventDetailsScreen(
             }
         },
         floatingActionButton = {
-            Button(
-                onClick = {
-                    // --- 2. Check if the user is a guest before allowing them to join ---
-                    if (authState is AuthState.Guest) {
-                        onLoginRequired()
-                    } else {
-                        if (!isJoined) {
-                            viewModel.toggleJoinedStatus(event.id)
-                            showCongratsDialog = true
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(50),
-                // The button is now disabled only if the user is logged in AND has joined
-                enabled = !(authState !is AuthState.Guest && isJoined),
-                colors = if (isJoined) {
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color.Gray,
-                        disabledContainerColor = Color.Gray.copy(alpha = 0.8f)
-                    )
-                } else {
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+            // --- 1. Check if the event has ended ---
+            val eventHasEnded = event.startTimestamp != null &&
+                    (event.startTimestamp.seconds * 1000 + TimeUnit.HOURS.toMillis(event.durationHours.toLong())) < System.currentTimeMillis()
+
+            // --- 2. Conditionally display the correct button ---
+            if (isJoined && eventHasEnded) {
+                // If user has joined AND the event is over, show "Rate Attendees"
+                Button(
+                    onClick = { navController.navigate("${AppRoutes.RATE_ATTENDEES}/${event.id}") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Text("Rate Attendees")
                 }
-            ) {
-                if (isJoined) {
-                    Icon(Icons.Default.Check, contentDescription = "Joined")
-                    Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
-                    Text("You've Joined This Event")
-                } else {
-                    Text("Join Event")
+            } else {
+                // Otherwise, show the original "Join Event" button
+                Button(
+                    onClick = {
+                        if (authState is AuthState.Guest) {
+                            onLoginRequired()
+                        } else {
+                            if (!isJoined) {
+                                viewModel.toggleJoinedStatus(event.id)
+                                showCongratsDialog = true
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = RoundedCornerShape(50),
+                    enabled = !(authState !is AuthState.Guest && isJoined),
+                    colors = if (isJoined) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = Color.Gray,
+                            disabledContainerColor = Color.Gray.copy(alpha = 0.8f)
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    }
+                ) {
+                    if (isJoined) {
+                        Icon(Icons.Default.Check, contentDescription = "Joined")
+                        Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
+                        Text("You've Joined This Event")
+                    } else {
+                        Text("Join Event")
+                    }
                 }
             }
         },
