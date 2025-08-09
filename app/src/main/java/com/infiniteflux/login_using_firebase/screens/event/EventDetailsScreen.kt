@@ -37,6 +37,8 @@ fun EventDetailsScreen(
     val joinedEventIds by viewModel.joinedEventIds.collectAsState()
     val isJoined = joinedEventIds.contains(event?.id)
 
+    // --- 1. State for both dialogs ---
+    var showJoinConfirmDialog by remember { mutableStateOf(false) }
     var showCongratsDialog by remember { mutableStateOf(false) }
 
     if (event == null) {
@@ -65,13 +67,10 @@ fun EventDetailsScreen(
             }
         },
         floatingActionButton = {
-            // --- 1. Check if the event has ended ---
             val eventHasEnded = event.startTimestamp != null &&
                     (event.startTimestamp.seconds * 1000 + TimeUnit.HOURS.toMillis(event.durationHours.toLong())) < System.currentTimeMillis()
 
-            // --- 2. Conditionally display the correct button ---
             if (isJoined && eventHasEnded) {
-                // If user has joined AND the event is over, show "Rate Attendees"
                 Button(
                     onClick = { navController.navigate("${AppRoutes.RATE_ATTENDEES}/${event.id}") },
                     modifier = Modifier
@@ -82,15 +81,14 @@ fun EventDetailsScreen(
                     Text("Rate Attendees")
                 }
             } else {
-                // Otherwise, show the original "Join Event" button
                 Button(
                     onClick = {
                         if (authState is AuthState.Guest) {
                             onLoginRequired()
                         } else {
                             if (!isJoined) {
-                                viewModel.toggleJoinedStatus(event.id)
-                                showCongratsDialog = true
+                                // --- 2. Show the confirmation dialog first ---
+                                showJoinConfirmDialog = true
                             }
                         }
                     },
@@ -161,6 +159,30 @@ fun EventDetailsScreen(
         }
     }
 
+    // --- 3. Confirmation Dialog ---
+    if (showJoinConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showJoinConfirmDialog = false },
+            title = { Text("Join Event?") },
+            text = { Text("Are you sure you want to join '${event.title}'?") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.toggleJoinedStatus(event.id)
+                    showJoinConfirmDialog = false
+                    showCongratsDialog = true // Show the next dialog
+                }) {
+                    Text("Yes, Join")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showJoinConfirmDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // --- 4. Congratulations Dialog ---
     if (showCongratsDialog) {
         AlertDialog(
             onDismissRequest = { showCongratsDialog = false },

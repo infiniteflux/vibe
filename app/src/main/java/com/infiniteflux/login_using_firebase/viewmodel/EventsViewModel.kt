@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
 import com.google.firebase.firestore.FieldPath
+import kotlinx.coroutines.tasks.await
 
 class EventsViewModel : ViewModel() {
 
@@ -73,48 +74,49 @@ class EventsViewModel : ViewModel() {
     }
 
 
-    fun submitRating(eventId: String, ratedUserId: String, rating: String) {
-        if (currentUserId == null) return
+    // --- 2. UPDATED: submitRating is now a suspend function that returns a MatchResult ---
+    suspend fun submitRating(eventId: String, ratedUserId: String, rating: String): MatchResult {
+        if (currentUserId == null) return MatchResult.NoMatch
 
         val currentUserRatingRef = db.collection("events").document(eventId)
             .collection("ratings").document(currentUserId!!)
 
-        // This creates a map named "ratings" which contains another map of the user's ratings.
-        // SetOptions.merge() ensures we don't overwrite other ratings in the same document.
         val ratingData = mapOf("ratings" to mapOf(ratedUserId to rating))
-        currentUserRatingRef.set(ratingData, SetOptions.merge())
-            .addOnSuccessListener {
-                // After saving, check for a mutual match
-                checkForMutualConnection(eventId, ratedUserId, rating)
-            }
+
+        // Use await() to make the function wait until the upload is complete
+        currentUserRatingRef.set(ratingData, SetOptions.merge()).await()
+
+        // After saving, check for a mutual match and return the result
+        return checkForMutualConnection(eventId, ratedUserId, rating)
     }
 
-    private fun checkForMutualConnection(eventId: String, otherUserId: String, myRating: String) {
-        if (currentUserId == null) return
+    private suspend fun checkForMutualConnection(eventId: String, otherUserId: String, myRating: String): MatchResult {
+        if (currentUserId == null) return MatchResult.NoMatch
 
         val otherUserRatingRef = db.collection("events").document(eventId)
             .collection("ratings").document(otherUserId)
 
-        otherUserRatingRef.get().addOnSuccessListener { document ->
+        return try {
+            val document = otherUserRatingRef.get().await()
             if (document.exists()) {
-                // Directly access the nested map
                 val theirRatings = document.get("ratings") as? Map<String, String> ?: emptyMap()
                 val theirRatingForMe = theirRatings[currentUserId!!]
 
                 if (theirRatingForMe != null && theirRatingForMe == myRating) {
                     val connection = Connection(eventId = eventId)
-
-                    db.collection("users").document(currentUserId!!)
-                        .collection("connections").document(otherUserId).set(connection)
-
-                    db.collection("users").document(otherUserId)
-                        .collection("connections").document(currentUserId!!).set(connection)
+                    db.collection("users").document(currentUserId!!).collection("connections").document(otherUserId).set(connection).await()
+                    db.collection("users").document(otherUserId).collection("connections").document(currentUserId!!).set(connection).await()
+                    MatchResult.Match // It's a match!
+                } else {
+                    MatchResult.NoMatch // They rated differently
                 }
+            } else {
+                MatchResult.Pending // They haven't rated yet
             }
+        } catch (e: Exception) {
+            MatchResult.NoMatch // Handle any errors
         }
     }
-
-
 
     // --- 2. UPDATED createEvent function to handle image upload ---
     fun createEvent(
@@ -204,4 +206,29 @@ class EventsViewModel : ViewModel() {
         joinedEventsListener?.remove()
         _joinedEventIds.value = emptySet()
     }
+
+    // --- NEW FUNCTION to get users already rated by the current user ---
+    fun getMyRatedUsersForEvent(eventId: String, onResult: (Set<String>) -> Unit) {
+        if (currentUserId == null) {
+            onResult(emptySet())
+            return
+        }
+        db.collection("events").document(eventId)
+            .collection("ratings").document(currentUserId!!)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val ratingsMap = document.get("ratings") as? Map<String, String> ?: emptyMap()
+                    onResult(ratingsMap.keys)
+                } else {
+                    onResult(emptySet())
+                }
+            }
+    }
+}
+
+sealed class MatchResult {
+    object Match : MatchResult()
+    object NoMatch : MatchResult()
+    object Pending : MatchResult() // The other user hasn't rated yet
 }

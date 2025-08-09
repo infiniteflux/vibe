@@ -45,6 +45,8 @@ fun EventsScreen(
 
     val events by viewModel.events.collectAsState()
     val joinedEventIds by viewModel.joinedEventIds.collectAsState()
+    var eventToJoin by remember { mutableStateOf<Event?>(null) }
+    var eventJustJoined by remember { mutableStateOf<Event?>(null) }
 
     val filteredEvents = events.filter {
         (it.title.contains(searchQuery, ignoreCase = true) || it.location.contains(searchQuery, ignoreCase = true)) &&
@@ -80,14 +82,56 @@ fun EventsScreen(
                         if (authState is AuthState.Guest) {
                             onLoginRequired()
                         } else {
-                            viewModel.toggleJoinedStatus(event.id)
+                            //viewModel.toggleJoinedStatus(event.id)
+                            eventToJoin = event
                         }
                     }
                 )
             }
         }
     }
+
+    // --- 2. Confirmation Dialog ---
+    if (eventToJoin != null) {
+        AlertDialog(
+            onDismissRequest = { eventToJoin = null },
+            title = { Text("Join Event?") },
+            text = { Text("Are you sure you want to join '${eventToJoin!!.title}'?") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.toggleJoinedStatus(eventToJoin!!.id)
+                    eventJustJoined = eventToJoin // Set the event to show the congrats dialog
+                    eventToJoin = null // Close this dialog
+                }) {
+                    Text("Yes, Join")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eventToJoin = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    // --- 3. Congratulations Dialog ---
+    if (eventJustJoined != null) {
+        AlertDialog(
+            onDismissRequest = { eventJustJoined = null },
+            title = { Text("Congratulations!") },
+            text = { Text("You have successfully joined the event: ${eventJustJoined!!.title}") },
+            confirmButton = {
+                Button(onClick = { eventJustJoined = null }) {
+                    Text("Awesome!")
+                }
+            }
+        )
+    }
 }
+
+
+
+
 
 @Composable
 fun DiscoverTopSection() {
@@ -206,9 +250,11 @@ fun EventCard(
                     Button(
                         onClick = onJoinClicked,
                         shape = RoundedCornerShape(50),
+                        enabled = !isJoined,
                         colors = if (isJoined) {
                             ButtonDefaults.buttonColors(
-                                containerColor = Color.LightGray
+                                containerColor = Color.Gray,
+                                disabledContainerColor = Color.Gray.copy(alpha = 0.8f)
                             )
                         } else {
                             ButtonDefaults.buttonColors(
