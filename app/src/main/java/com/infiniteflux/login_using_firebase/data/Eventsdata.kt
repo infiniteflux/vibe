@@ -12,6 +12,7 @@ data class Event(
     val category: String = "",
     val description: String = "",
     val host: String = "",
+    @ServerTimestamp
     val startTimestamp: Timestamp? = null,
     val durationHours: Int = 2
 )

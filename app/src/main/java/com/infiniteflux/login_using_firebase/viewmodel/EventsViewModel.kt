@@ -1,7 +1,8 @@
 package com.infiniteflux.login_using_firebase.viewmodel
+
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
@@ -11,11 +12,11 @@ import com.google.firebase.storage.ktx.storage
 import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.data.JoinedEvent
 import com.infiniteflux.login_using_firebase.data.User
-import com.infiniteflux.login_using_firebase.data.EventRating
 import com.infiniteflux.login_using_firebase.data.Connection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
+import com.google.firebase.firestore.FieldPath
 
 class EventsViewModel : ViewModel() {
 
@@ -42,27 +43,46 @@ class EventsViewModel : ViewModel() {
     }
 
     fun getAttendees(eventId: String, onResult: (List<User>) -> Unit) {
-        if (currentUserId == null) return
-        // First, get the list of joined user IDs from the event
-        db.collection("users")
-            .whereArrayContains("joinedEvents", eventId) // Assuming you add this field to user docs
+        if (currentUserId == null) {
+            onResult(emptyList())
+            return
+        }
+
+        // This query requires a Firestore Index. If it fails, check your Logcat for a URL
+        // that will automatically create the index for you.
+        db.collectionGroup("joinedEvents").whereEqualTo("eventId", eventId)
             .get()
             .addOnSuccessListener { snapshot ->
-                val users = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
-                // Filter out the current user from the list
-                onResult(users.filter { it.id != currentUserId })
+                if (snapshot.isEmpty) {
+                    onResult(emptyList())
+                    return@addOnSuccessListener
+                }
+                val userIds = snapshot.documents.map { it.reference.parent.parent!!.id }
+
+                db.collection("users").whereIn(FieldPath.documentId(), userIds).get()
+                    .addOnSuccessListener { userSnapshot ->
+                        val users = userSnapshot.toObjects(User::class.java)
+                        onResult(users.filter { it.id != currentUserId })
+                    }
+            }
+            .addOnFailureListener { exception ->
+                // This will print the error in your logs if the index is missing.
+                Log.e("EventsViewModel", "Error getting attendees: ", exception)
+                onResult(emptyList())
             }
     }
 
-    // --- NEW: Function to submit a rating and check for a match ---
+
     fun submitRating(eventId: String, ratedUserId: String, rating: String) {
         if (currentUserId == null) return
 
         val currentUserRatingRef = db.collection("events").document(eventId)
             .collection("ratings").document(currentUserId!!)
 
-        // Save the current user's rating
-        currentUserRatingRef.set(mapOf("ratings.$ratedUserId" to rating), SetOptions.merge())
+        // This creates a map named "ratings" which contains another map of the user's ratings.
+        // SetOptions.merge() ensures we don't overwrite other ratings in the same document.
+        val ratingData = mapOf("ratings" to mapOf(ratedUserId to rating))
+        currentUserRatingRef.set(ratingData, SetOptions.merge())
             .addOnSuccessListener {
                 // After saving, check for a mutual match
                 checkForMutualConnection(eventId, ratedUserId, rating)
@@ -76,22 +96,24 @@ class EventsViewModel : ViewModel() {
             .collection("ratings").document(otherUserId)
 
         otherUserRatingRef.get().addOnSuccessListener { document ->
-            val theirRatings = document.toObject(EventRating::class.java)?.ratings ?: emptyMap()
-            val theirRatingForMe = theirRatings[currentUserId!!]
+            if (document.exists()) {
+                // Directly access the nested map
+                val theirRatings = document.get("ratings") as? Map<String, String> ?: emptyMap()
+                val theirRatingForMe = theirRatings[currentUserId!!]
 
-            // If they rated me and the ratings match, create a connection!
-            if (theirRatingForMe != null && theirRatingForMe == myRating) {
-                val connection = Connection(eventId = eventId, connectedAt = Timestamp.now())
+                if (theirRatingForMe != null && theirRatingForMe == myRating) {
+                    val connection = Connection(eventId = eventId)
 
-                // Add connection for both users
-                db.collection("users").document(currentUserId!!)
-                    .collection("connections").document(otherUserId).set(connection)
+                    db.collection("users").document(currentUserId!!)
+                        .collection("connections").document(otherUserId).set(connection)
 
-                db.collection("users").document(otherUserId)
-                    .collection("connections").document(currentUserId!!).set(connection)
+                    db.collection("users").document(otherUserId)
+                        .collection("connections").document(currentUserId!!).set(connection)
+                }
             }
         }
     }
+
 
 
     // --- 2. UPDATED createEvent function to handle image upload ---

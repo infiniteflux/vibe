@@ -45,23 +45,20 @@ fun CreateEventScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var category by remember { mutableStateOf("") }
 
-    // --- 1. State management for Date and Time Pickers ---
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var selectedDate by remember { mutableStateOf<Date?>(null) }
     var selectedTime by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
     val datePickerState = rememberDatePickerState(
-        // Prevent selecting dates before today
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                return utcTimeMillis >= System.currentTimeMillis() - 86400000 // Allow today
+                return utcTimeMillis >= System.currentTimeMillis() - 86400000
             }
         }
     )
     val timePickerState = rememberTimePickerState()
 
-    // Formatted date and time string for the UI
     val formattedDateTime = remember(selectedDate, selectedTime) {
         if (selectedDate != null && selectedTime != null) {
             val calendar = Calendar.getInstance().apply {
@@ -113,13 +110,35 @@ fun CreateEventScreen(
         ) {
             Text("Event Details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-            // (Image Picker UI remains the same)
-            Box(modifier = Modifier.clickable { imagePickerLauncher.launch("image/*") }, /*...*/) { /*...*/ }
+            // --- THE FIX: The Image Picker UI is now back ---
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                    .clickable { imagePickerLauncher.launch("image/*") },
+                contentAlignment = Alignment.Center
+            ) {
+                if (imageUri != null) {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = "Selected event image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = "Add image", tint = Color.Gray)
+                        Text("Tap to add an image", color = Color.Gray)
+                    }
+                }
+            }
+            // --- END FIX ---
 
             OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Event Title") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = location, onValueChange = { location = it }, label = { Text("Location") }, modifier = Modifier.fillMaxWidth())
 
-            // --- 2. Read-only TextField to launch the Date Picker ---
             OutlinedTextField(
                 value = formattedDateTime,
                 onValueChange = {},
@@ -160,7 +179,6 @@ fun CreateEventScreen(
         }
     }
 
-    // --- 3. Date Picker Dialog ---
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -168,7 +186,6 @@ fun CreateEventScreen(
                 TextButton(onClick = {
                     showDatePicker = false
                     selectedDate = datePickerState.selectedDateMillis?.let { Date(it) }
-                    // Show the time picker right after a date is confirmed
                     if (selectedDate != null) {
                         showTimePicker = true
                     }
@@ -186,24 +203,23 @@ fun CreateEventScreen(
         }
     }
 
-    // --- 4. Time Picker Dialog ---
     if (showTimePicker) {
         TimePickerDialog(
             onDismissRequest = { showTimePicker = false },
-            onConfirm = {
-                selectedTime = Pair(timePickerState.hour, timePickerState.minute)
+            onConfirm = { hour, minute ->
+                selectedTime = Pair(hour, minute)
                 showTimePicker = false
             }
         )
     }
 }
 
-// A custom composable for the TimePickerDialog
+// --- UPDATED TimePickerDialog to pass back the selected time ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
     onDismissRequest: () -> Unit,
-    onConfirm: () -> Unit,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
     title: @Composable () -> Unit = { Text("Select Time") }
 ) {
     val timePickerState = rememberTimePickerState()
@@ -215,8 +231,7 @@ fun TimePickerDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                // Here you would typically update your state with timePickerState.hour and timePickerState.minute
-                onConfirm()
+                onConfirm(timePickerState.hour, timePickerState.minute)
             }) {
                 Text("OK")
             }
@@ -228,7 +243,6 @@ fun TimePickerDialog(
         }
     )
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -245,14 +259,14 @@ private fun CategoryDropdown(
     ) {
         OutlinedTextField(
             value = selectedCategory,
-            onValueChange = {}, // Input is read-only
+            onValueChange = {},
             readOnly = true,
             label = { Text("Category") },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
             },
             modifier = Modifier
-                .menuAnchor() // This connects the TextField to the dropdown menu
+                .menuAnchor()
                 .fillMaxWidth()
         )
 

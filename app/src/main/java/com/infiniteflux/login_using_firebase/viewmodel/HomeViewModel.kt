@@ -9,7 +9,6 @@ import com.google.firebase.ktx.Firebase
 import com.infiniteflux.login_using_firebase.data.Event
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 
 class HomeViewModel : ViewModel() {
     private val auth = Firebase.auth
@@ -28,7 +27,7 @@ class HomeViewModel : ViewModel() {
     private val _trendingEvents = MutableStateFlow<List<Event>>(emptyList())
     val trendingEvents: StateFlow<List<Event>> = _trendingEvents
 
-    // --- 1. NEW: State to hold all event IDs and joined event IDs ---
+    // State to hold all event IDs and joined event IDs for accurate counting
     private val _allEventIds = MutableStateFlow<Set<String>>(emptySet())
     private val _joinedEventIds = MutableStateFlow<Set<String>>(emptySet())
 
@@ -36,13 +35,14 @@ class HomeViewModel : ViewModel() {
     private var userDataListener: ListenerRegistration? = null
     private var trendingEventsListener: ListenerRegistration? = null
     private var allEventsListener: ListenerRegistration? = null
-    private var joinedEventsListener: ListenerRegistration? = null
+    private var joinedEventsListenerForCount: ListenerRegistration? = null
+
 
     fun initializeData() {
         fetchUserData()
         fetchTrendingEvents()
-        fetchAllEventIds() // Fetch all event IDs
-        fetchJoinedEvents() // Fetch user's joined events
+        fetchAllEventIds()
+        fetchJoinedEventsForCount()
     }
 
     private fun fetchUserData() {
@@ -61,28 +61,26 @@ class HomeViewModel : ViewModel() {
         allEventsListener?.remove()
         allEventsListener = db.collection("events").addSnapshotListener { snapshots, _ ->
             if (snapshots != null) {
-                // We only need the IDs, which is more efficient than fetching the whole object
                 _allEventIds.value = snapshots.documents.map { it.id }.toSet()
-                updateJoinedEventsCount() // Recalculate count when the events list changes
+                updateJoinedEventsCount()
             }
         }
     }
 
-    private fun fetchJoinedEvents() {
+    private fun fetchJoinedEventsForCount() {
         if (currentUserId != null) {
-            joinedEventsListener?.remove()
-            joinedEventsListener = db.collection("users").document(currentUserId!!)
+            joinedEventsListenerForCount?.remove()
+            joinedEventsListenerForCount = db.collection("users").document(currentUserId!!)
                 .collection("joinedEvents")
                 .addSnapshotListener { snapshots, _ ->
                     if (snapshots != null) {
                         _joinedEventIds.value = snapshots.documents.map { it.id }.toSet()
-                        updateJoinedEventsCount() // Recalculate count when joined events change
+                        updateJoinedEventsCount()
                     }
                 }
         }
     }
 
-    // --- 2. NEW: Function to calculate the correct count ---
     private fun updateJoinedEventsCount() {
         val existingJoinedEvents = _joinedEventIds.value.intersect(_allEventIds.value)
         _eventsCount.value = existingJoinedEvents.size
@@ -106,7 +104,7 @@ class HomeViewModel : ViewModel() {
         userDataListener?.remove()
         trendingEventsListener?.remove()
         allEventsListener?.remove()
-        joinedEventsListener?.remove()
+        joinedEventsListenerForCount?.remove()
         _userName.value = "User"
         _eventsCount.value = 0
         _trendingEvents.value = emptyList()
