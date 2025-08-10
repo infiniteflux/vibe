@@ -22,7 +22,7 @@ class HomeViewModel : ViewModel() {
     val userName: StateFlow<String> = _userName
 
     private val _eventsCount = MutableStateFlow(0)
-    val eventsCount: StateFlow<Int> = _eventsCount
+    val eventsCount: MutableStateFlow<Int> = _eventsCount
 
     private val _trendingEvents = MutableStateFlow<List<Event>>(emptyList())
     val trendingEvents: StateFlow<List<Event>> = _trendingEvents
@@ -43,10 +43,11 @@ class HomeViewModel : ViewModel() {
     fun initializeData() {
         Log.d("HomeViewModel", "Initializing data for user: $currentUserId")
         fetchUserData()
-        fetchAllEvents() // This is now the single source of truth for events
+        fetchAllEvents()
         fetchJoinedEventsForCount()
     }
 
+    // --- THE FIX: This function is now only responsible for the user's name ---
     private fun fetchUserData() {
         userDataListener?.remove()
         if (currentUserId != null) {
@@ -60,7 +61,6 @@ class HomeViewModel : ViewModel() {
         }
     }
 
-    // --- THE FIX: This is now the single listener for all events ---
     private fun fetchAllEvents() {
         _isLoadingTrending.value = true
         allEventsListener?.remove()
@@ -80,11 +80,9 @@ class HomeViewModel : ViewModel() {
                     }
                     Log.d("HomeViewModel", "All events updated: ${allEvents.size} events found.")
 
-                    // 1. Update the list of all event IDs for the count logic
-                    val allEventIds = allEvents.map { it.id }.toSet()
-                    updateJoinedEventsCount(allEventIds)
+                    _allEventIds.value = allEvents.map { it.id }.toSet()
+                    updateJoinedEventsCount()
 
-                    // 2. Filter, sort, and update the trending events list
                     _trendingEvents.value = allEvents
                         .filter { it.startTimestamp != null && it.startTimestamp.toDate().after(Date()) }
                         .sortedByDescending { it.joinCount }
@@ -105,15 +103,14 @@ class HomeViewModel : ViewModel() {
                     if (snapshots != null) {
                         _joinedEventIds.value = snapshots.documents.map { it.id }.toSet()
                         Log.d("HomeViewModel", "Joined event IDs updated: ${_joinedEventIds.value.size} events joined.")
-                        // We need to re-calculate the count, but not re-fetch all events
-                        updateJoinedEventsCount(_allEventIds.value)
+                        updateJoinedEventsCount()
                     }
                 }
         }
     }
 
-    private fun updateJoinedEventsCount(allEventIds: Set<String>) {
-        val existingJoinedEvents = _joinedEventIds.value.intersect(allEventIds)
+    private fun updateJoinedEventsCount() {
+        val existingJoinedEvents = _joinedEventIds.value.intersect(_allEventIds.value)
         _eventsCount.value = existingJoinedEvents.size
         Log.d("HomeViewModel", "Recalculated joined events count: ${_eventsCount.value}")
     }
