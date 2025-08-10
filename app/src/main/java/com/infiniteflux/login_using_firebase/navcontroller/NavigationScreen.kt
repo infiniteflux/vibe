@@ -121,7 +121,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                         navController = navController,
                         viewModel = eventsViewModel,
                         authState = authState,
-                        onLoginRequired = onLoginRequired
+                        onLoginRequired = onLoginRequired,
+                        authViewModel = authViewModel
                     )
                 }
                 composable(

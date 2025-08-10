@@ -150,6 +150,7 @@ class AuthViewModel : ViewModel() {
 
     fun signout(){
         auth.signOut()
+        _userRole.value = "user"
         _authState.value = AuthState.Unauthenticated
     }
 }

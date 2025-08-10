@@ -1,5 +1,7 @@
 package com.infiniteflux.login_using_firebase.screens.event
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -11,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,22 +26,16 @@ import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.viewmodel.AuthState
+import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
-
-/*
- * =====================================================================================
- * NOTE:
- * This UI is now connected to the dynamic EventsViewModel and is aware of guest users.
- * =====================================================================================
- */
 
 @Composable
 fun EventsScreen(
     navController: NavController,
     viewModel: EventsViewModel,
-    // --- 1. Accept the auth state and the login prompt trigger ---
     authState: AuthState?,
-    onLoginRequired: () -> Unit
+    onLoginRequired: () -> Unit,
+    authViewModel: AuthViewModel
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
@@ -47,6 +44,9 @@ fun EventsScreen(
     val joinedEventIds by viewModel.joinedEventIds.collectAsState()
     var eventToJoin by remember { mutableStateOf<Event?>(null) }
     var eventJustJoined by remember { mutableStateOf<Event?>(null) }
+    var eventToDelete by remember { mutableStateOf<Event?>(null) }
+
+    val userRole by authViewModel.userRole.observeAsState("user")
 
     val filteredEvents = events.filter {
         (it.title.contains(searchQuery, ignoreCase = true) || it.location.contains(searchQuery, ignoreCase = true)) &&
@@ -74,24 +74,25 @@ fun EventsScreen(
                 EventCard(
                     event = event,
                     isJoined = isJoined,
+                    userRole = userRole,
                     onCardClicked = {
                         navController.navigate("${AppRoutes.EVENT_DETAILS}/${event.id}")
                     },
                     onJoinClicked = {
-                        // --- 2. Check if the user is a guest before allowing them to join ---
                         if (authState is AuthState.Guest) {
                             onLoginRequired()
                         } else {
-                            //viewModel.toggleJoinedStatus(event.id)
                             eventToJoin = event
                         }
+                    },
+                    onDeleteClicked = {
+                        eventToDelete = event
                     }
                 )
             }
         }
     }
 
-    // --- 2. Confirmation Dialog ---
     if (eventToJoin != null) {
         AlertDialog(
             onDismissRequest = { eventToJoin = null },
@@ -100,8 +101,8 @@ fun EventsScreen(
             confirmButton = {
                 Button(onClick = {
                     viewModel.toggleJoinedStatus(eventToJoin!!.id)
-                    eventJustJoined = eventToJoin // Set the event to show the congrats dialog
-                    eventToJoin = null // Close this dialog
+                    eventJustJoined = eventToJoin
+                    eventToJoin = null
                 }) {
                     Text("Yes, Join")
                 }
@@ -114,7 +115,6 @@ fun EventsScreen(
         )
     }
 
-    // --- 3. Congratulations Dialog ---
     if (eventJustJoined != null) {
         AlertDialog(
             onDismissRequest = { eventJustJoined = null },
@@ -127,9 +127,32 @@ fun EventsScreen(
             }
         )
     }
+
+    if (eventToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { eventToDelete = null },
+            title = { Text("Delete Event?") },
+            text = { Text("Are you sure you want to permanently delete '${eventToDelete!!.title}'? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteEvent(eventToDelete!!.id) {
+                            eventToDelete = null // Close the dialog on success
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Yes, Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { eventToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
-
-
 
 
 
@@ -203,12 +226,15 @@ fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) 
     }
 }
 
+
 @Composable
 fun EventCard(
     event: Event,
     isJoined: Boolean,
+    userRole: String,
     onCardClicked: () -> Unit,
-    onJoinClicked: () -> Unit
+    onJoinClicked: () -> Unit,
+    onDeleteClicked: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -227,6 +253,7 @@ fun EventCard(
                 )
             }
             Column(modifier = Modifier.padding(16.dp)) {
+                // --- THE FIX: Added the missing Text and Icon rows back ---
                 Text(event.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -241,12 +268,20 @@ fun EventCard(
                     Text(event.date, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+                // --- END FIX ---
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Spacer(modifier = Modifier.weight(1f))
+                    if (userRole == "creator") {
+                        IconButton(onClick = onDeleteClicked) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete Event", tint = Color.Gray)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+
                     Button(
                         onClick = onJoinClicked,
                         shape = RoundedCornerShape(50),

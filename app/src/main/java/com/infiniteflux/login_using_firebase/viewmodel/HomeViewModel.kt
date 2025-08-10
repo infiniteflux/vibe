@@ -10,6 +10,7 @@ import com.google.firebase.ktx.Firebase
 import com.infiniteflux.login_using_firebase.data.Event
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.Date
 
 class HomeViewModel : ViewModel() {
     private val auth = Firebase.auth
@@ -34,7 +35,6 @@ class HomeViewModel : ViewModel() {
 
     // Listeners
     private var userDataListener: ListenerRegistration? = null
-    private var trendingEventsListener: ListenerRegistration? = null
     private var allEventsListener: ListenerRegistration? = null
     private var joinedEventsListenerForCount: ListenerRegistration? = null
 
@@ -43,7 +43,7 @@ class HomeViewModel : ViewModel() {
     fun initializeData() {
         Log.d("HomeViewModel", "Initializing data for user: $currentUserId")
         fetchUserData()
-        fetchAllEventIds()
+        fetchAllEvents() // This is now the single source of truth for events
         fetchJoinedEventsForCount()
     }
 
@@ -55,23 +55,44 @@ class HomeViewModel : ViewModel() {
                 .addSnapshotListener { document, _ ->
                     if (document != null) {
                         _userName.value = document.getString("name") ?: "User"
-                        Log.d("HomeViewModel", "User name updated: ${_userName.value}")
                     }
                 }
         }
     }
 
-    private fun fetchAllEventIds() {
+    // --- THE FIX: This is now the single listener for all events ---
+    private fun fetchAllEvents() {
+        _isLoadingTrending.value = true
         allEventsListener?.remove()
-        Log.d("HomeViewModel", "Fetching all event IDs...")
-        allEventsListener = db.collection("events").addSnapshotListener { snapshots, _ ->
-            if (snapshots != null) {
-                _allEventIds.value = snapshots.documents.map { it.id }.toSet()
-                Log.d("HomeViewModel", "All event IDs updated: ${_allEventIds.value.size} events found.")
-                updateJoinedEventsCount()
-                fetchTrendingEvents()
+        Log.d("HomeViewModel", "Setting up main events listener...")
+        allEventsListener = db.collection("events")
+            .orderBy("startTimestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshots, error ->
+                if (error != null) {
+                    Log.e("HomeViewModel", "Error fetching all events", error)
+                    _isLoadingTrending.value = false
+                    return@addSnapshotListener
+                }
+
+                if (snapshots != null) {
+                    val allEvents = snapshots.documents.mapNotNull {
+                        it.toObject(Event::class.java)?.copy(id = it.id)
+                    }
+                    Log.d("HomeViewModel", "All events updated: ${allEvents.size} events found.")
+
+                    // 1. Update the list of all event IDs for the count logic
+                    val allEventIds = allEvents.map { it.id }.toSet()
+                    updateJoinedEventsCount(allEventIds)
+
+                    // 2. Filter, sort, and update the trending events list
+                    _trendingEvents.value = allEvents
+                        .filter { it.startTimestamp != null && it.startTimestamp.toDate().after(Date()) }
+                        .sortedByDescending { it.joinCount }
+                        .take(3)
+                    Log.d("HomeViewModel", "Trending events updated: ${_trendingEvents.value.size} events found.")
+                }
+                _isLoadingTrending.value = false
             }
-        }
     }
 
     private fun fetchJoinedEventsForCount() {
@@ -84,58 +105,27 @@ class HomeViewModel : ViewModel() {
                     if (snapshots != null) {
                         _joinedEventIds.value = snapshots.documents.map { it.id }.toSet()
                         Log.d("HomeViewModel", "Joined event IDs updated: ${_joinedEventIds.value.size} events joined.")
-                        updateJoinedEventsCount()
+                        // We need to re-calculate the count, but not re-fetch all events
+                        updateJoinedEventsCount(_allEventIds.value)
                     }
                 }
         }
     }
 
-    private fun updateJoinedEventsCount() {
-        val existingJoinedEvents = _joinedEventIds.value.intersect(_allEventIds.value)
+    private fun updateJoinedEventsCount(allEventIds: Set<String>) {
+        val existingJoinedEvents = _joinedEventIds.value.intersect(allEventIds)
         _eventsCount.value = existingJoinedEvents.size
         Log.d("HomeViewModel", "Recalculated joined events count: ${_eventsCount.value}")
-    }
-
-    // --- THE FIX: Updated the query to sort by joinCount ---
-    private fun fetchTrendingEvents() {
-        _isLoadingTrending.value = true
-        trendingEventsListener?.remove()
-        Log.d("HomeViewModel", "Fetching trending events...")
-        trendingEventsListener = db.collection("events")
-            // 1. Filter for events that haven't started yet.
-            .whereGreaterThan("startTimestamp", com.google.firebase.Timestamp.now())
-            // 2. Sort by the number of people who have joined, most popular first.
-            .orderBy("joinCount", Query.Direction.DESCENDING)
-            // 3. Get the top 3 most popular upcoming events.
-            .limit(3)
-            .addSnapshotListener { snapshots, error ->
-                if (error != null) {
-                    // This will log an error if you are missing the necessary index.
-                    Log.e("HomeViewModel", "Error fetching trending events", error)
-                    _isLoadingTrending.value = false
-                    return@addSnapshotListener
-                }
-
-                if (snapshots != null) {
-                    _trendingEvents.value = snapshots.documents.mapNotNull {
-                        it.toObject(Event::class.java)?.copy(id = it.id)
-                    }
-                    Log.d("HomeViewModel", "Trending events updated: ${_trendingEvents.value.size} events found.")
-                }
-                _isLoadingTrending.value = false
-            }
     }
 
     fun clearDataAndListeners() {
         Log.d("HomeViewModel", "Clearing all data and listeners.")
         userDataListener?.remove()
-        trendingEventsListener?.remove()
         allEventsListener?.remove()
         joinedEventsListenerForCount?.remove()
         _userName.value = "User"
         _eventsCount.value = 0
         _trendingEvents.value = emptyList()
-        _allEventIds.value = emptySet()
         _joinedEventIds.value = emptySet()
         _isLoadingTrending.value = true
     }
