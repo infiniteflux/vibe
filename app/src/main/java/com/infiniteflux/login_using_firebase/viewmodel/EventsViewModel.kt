@@ -3,6 +3,7 @@ package com.infiniteflux.login_using_firebase.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
 import com.google.firebase.firestore.FieldPath
 import kotlinx.coroutines.tasks.await
+import java.util.Date
 
 class EventsViewModel : ViewModel() {
 
@@ -135,46 +137,48 @@ class EventsViewModel : ViewModel() {
     fun createEvent(
         title: String,
         location: String,
-        date: String,
+        dateString: String, // Keep the formatted string for display
         category: String,
         description: String,
-        durationHours: Int,
         host: String,
-        imageUri: Uri?, // Pass the selected image URI
-        onSuccess: () -> Unit // Callback to run on success
+        durationHours: Int,
+        imageUri: Uri?,
+        eventStartDate: Date, // The actual start date and time
+        onSuccess: () -> Unit
     ) {
-        if (title.isBlank() || location.isBlank() || date.isBlank() || category.isBlank() || description.isBlank() || host.isBlank()) {
+        if (title.isBlank() || location.isBlank() || dateString.isBlank() || category.isBlank() || description.isBlank() || host.isBlank()) {
             return
         }
 
-        // If no image is selected, use a placeholder and create the event directly
-        if (imageUri == null) {
+        val createEventWithUrl = { imageUrl: String ->
             val newEvent = Event(
-                title = title, location = location, date = date, category = category,
-                description = description, host = host, durationHours = durationHours, imageUrl = "https://placehold.co/600x400"
+                title = title,
+                location = location,
+                date = dateString, // Save the formatted string
+                category = category,
+                description = description,
+                host = host,
+                imageUrl = imageUrl,
+                durationHours = durationHours,
+                // Convert the user-selected Date into a Firebase Timestamp
+                startTimestamp = Timestamp(eventStartDate)
             )
             db.collection("events").add(newEvent).addOnSuccessListener { onSuccess() }
+        }
+
+        if (imageUri == null) {
+            createEventWithUrl("https://placehold.co/600x400")
             return
         }
 
-        // If an image is selected, upload it first
         val imageFileName = UUID.randomUUID().toString()
         val storageRef = storage.reference.child("event_images/$imageFileName.jpg")
 
         storageRef.putFile(imageUri)
             .addOnSuccessListener {
-                // After upload, get the download URL
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
-                    // Now create the event with the correct image URL
-                    val newEvent = Event(
-                        title = title, location = location, date = date, category = category, durationHours = durationHours,
-                        description = description, host = host, imageUrl = downloadUrl.toString()
-                    )
-                    db.collection("events").add(newEvent).addOnSuccessListener { onSuccess() }
+                    createEventWithUrl(downloadUrl.toString())
                 }
-            }
-            .addOnFailureListener {
-                // Handle upload failure
             }
     }
 
@@ -236,6 +240,15 @@ class EventsViewModel : ViewModel() {
                 } else {
                     onResult(emptySet())
                 }
+            }
+    }
+    fun deleteEvent(eventId: String, onSuccess: () -> Unit) {
+        db.collection("events").document(eventId).delete()
+            .addOnSuccessListener {
+                onSuccess() // This is to navigate back after deletion
+            }
+            .addOnFailureListener {
+                // Handle any errors, like showing a toast
             }
     }
 }

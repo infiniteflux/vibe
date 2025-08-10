@@ -12,9 +12,10 @@ data class Event(
     val category: String = "",
     val description: String = "",
     val host: String = "",
-    @ServerTimestamp
+    val joinCount: Int = 0,
     val startTimestamp: Timestamp? = null,
-    val durationHours: Int = 2
+    val durationHours: Int = 2,
+
 )
 
 data class EventRating(

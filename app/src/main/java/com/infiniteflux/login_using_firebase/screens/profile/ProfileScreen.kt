@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ConnectionViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
@@ -43,7 +44,8 @@ fun ProfileScreen(
     authViewModel: AuthViewModel,// Get instance of AuthViewModel for logout
     chatViewModel: ChatViewModel,
     eventsViewModel: EventsViewModel,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewModel,
+    connectionViewModel: ConnectionViewModel
 ) {
     val user by viewModel.userProfile.collectAsState()
 
@@ -143,6 +145,7 @@ fun ProfileScreen(
                         eventsViewModel.clearDataAndListeners()
                         homeViewModel.clearDataAndListeners()
                         viewModel.clearDataAndListeners() //  this is profile view model
+                        connectionViewModel.clearDataAndListeners()
 
                         // Now, sign out
                         authViewModel.signout()

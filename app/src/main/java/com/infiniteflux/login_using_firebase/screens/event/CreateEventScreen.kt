@@ -47,8 +47,9 @@ fun CreateEventScreen(
 
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf<Date?>(null) }
-    var selectedTime by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+
+    var eventStartDate by remember { mutableStateOf<Date?>(null) }
+    var formattedDateTime by remember { mutableStateOf("") }
 
     val datePickerState = rememberDatePickerState(
         selectableDates = object : SelectableDates {
@@ -57,26 +58,10 @@ fun CreateEventScreen(
             }
         }
     )
-    val timePickerState = rememberTimePickerState()
-
-    val formattedDateTime = remember(selectedDate, selectedTime) {
-        if (selectedDate != null && selectedTime != null) {
-            val calendar = Calendar.getInstance().apply {
-                time = selectedDate!!
-                set(Calendar.HOUR_OF_DAY, selectedTime!!.first)
-                set(Calendar.MINUTE, selectedTime!!.second)
-            }
-            SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault()).format(calendar.time)
-        } else {
-            ""
-        }
-    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
+    ) { uri: Uri? -> imageUri = uri }
 
     val isFormValid by remember(title, location, formattedDateTime, category, description, host, durationHours) {
         derivedStateOf {
@@ -85,7 +70,6 @@ fun CreateEventScreen(
                     durationHours.isNotBlank()
         }
     }
-
     val focusManager = LocalFocusManager.current
 
     Scaffold(
@@ -110,7 +94,6 @@ fun CreateEventScreen(
         ) {
             Text("Event Details", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-            // --- THE FIX: The Image Picker UI is now back ---
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +117,6 @@ fun CreateEventScreen(
                     }
                 }
             }
-            // --- END FIX ---
 
             OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Event Title") }, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = location, onValueChange = { location = it }, label = { Text("Location") }, modifier = Modifier.fillMaxWidth())
@@ -163,12 +145,20 @@ fun CreateEventScreen(
 
             Button(
                 onClick = {
-                    viewModel.createEvent(
-                        title = title, location = location, date = formattedDateTime, category = category,
-                        description = description, host = host, durationHours = durationHours.toIntOrNull() ?: 2,
-                        imageUri = imageUri
-                    ) {
-                        navController.navigateUp()
+                    if (eventStartDate != null) {
+                        viewModel.createEvent(
+                            title = title,
+                            location = location,
+                            dateString = formattedDateTime,
+                            category = category,
+                            description = description,
+                            host = host,
+                            durationHours = durationHours.toIntOrNull() ?: 2,
+                            imageUri = imageUri,
+                            eventStartDate = eventStartDate!!
+                        ) {
+                            navController.navigateUp()
+                        }
                     }
                 },
                 enabled = isFormValid,
@@ -185,19 +175,13 @@ fun CreateEventScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDatePicker = false
-                    selectedDate = datePickerState.selectedDateMillis?.let { Date(it) }
-                    if (selectedDate != null) {
+                    eventStartDate = datePickerState.selectedDateMillis?.let { Date(it) }
+                    if (eventStartDate != null) {
                         showTimePicker = true
                     }
-                }) {
-                    Text("OK")
-                }
+                }) { Text("OK") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            }
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } }
         ) {
             DatePicker(state = datePickerState)
         }
@@ -207,14 +191,19 @@ fun CreateEventScreen(
         TimePickerDialog(
             onDismissRequest = { showTimePicker = false },
             onConfirm = { hour, minute ->
-                selectedTime = Pair(hour, minute)
+                val calendar = Calendar.getInstance().apply {
+                    time = eventStartDate!!
+                    set(Calendar.HOUR_OF_DAY, hour)
+                    set(Calendar.MINUTE, minute)
+                }
+                eventStartDate = calendar.time
+                formattedDateTime = SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault()).format(calendar.time)
                 showTimePicker = false
             }
         )
     }
 }
 
-// --- UPDATED TimePickerDialog to pass back the selected time ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(

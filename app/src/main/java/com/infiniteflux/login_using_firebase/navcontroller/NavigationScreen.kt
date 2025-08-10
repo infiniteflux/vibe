@@ -60,6 +60,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 chatViewModel.initializeData()
                 eventsViewModel.initializeData()
                 profileViewModel.initializeData()
+                connectionViewModel.initializeData()
 
                 navController.navigate(AppRoutes.HOME) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -185,7 +186,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                         authViewModel = authViewModel,
                         chatViewModel = chatViewModel,
                         eventsViewModel = eventsViewModel,
-                        homeViewModel = homeViewModel
+                        homeViewModel = homeViewModel,
+                        connectionViewModel=connectionViewModel
                     )
                 }
                 composable(AppRoutes.VERIFICATION) {
