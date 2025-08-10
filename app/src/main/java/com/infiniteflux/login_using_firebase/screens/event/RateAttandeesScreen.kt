@@ -98,7 +98,7 @@ fun RateAttendeesScreen(
                             }
                         },
                         onSeeConnectionsClicked = {
-                            navController.navigate(AppRoutes.PROFILE)
+                            navController.navigate(AppRoutes.CONNECTION)
                         }
                     )
                 }
