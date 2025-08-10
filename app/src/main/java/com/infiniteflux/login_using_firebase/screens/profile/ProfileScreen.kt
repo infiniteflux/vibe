@@ -49,6 +49,7 @@ fun ProfileScreen(
 ) {
     val user by viewModel.userProfile.collectAsState()
 
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
