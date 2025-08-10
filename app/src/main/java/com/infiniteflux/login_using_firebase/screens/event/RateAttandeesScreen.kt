@@ -53,14 +53,22 @@ fun RateAttendeesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Rate Attendees") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp, start = 4.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-            )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Rate Attendees",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     ) { padding ->
         if (attendeesState.isEmpty()) {
