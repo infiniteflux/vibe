@@ -15,6 +15,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 
 class ConnectionViewModel : ViewModel() {
@@ -22,7 +24,6 @@ class ConnectionViewModel : ViewModel() {
     private val db = Firebase.firestore
     private val currentUserId get() = auth.currentUser?.uid
 
-    // --- 2. StateFlow to hold the final list of connection info ---
     private val _connections = MutableStateFlow<List<ConnectionInfo>>(emptyList())
     val connections: StateFlow<List<ConnectionInfo>> = _connections
 
@@ -36,33 +37,35 @@ class ConnectionViewModel : ViewModel() {
         if (currentUserId == null) return
         connectionsListener?.remove()
 
-        // --- 3. Listen for changes in the user's connections sub-collection ---
         connectionsListener = db.collection("users").document(currentUserId!!)
             .collection("connections")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
 
-                // Use a coroutine to handle the async calls for fetching details
                 viewModelScope.launch {
                     val connectionInfos = snapshots.documents.mapNotNull { doc ->
                         val connection = doc.toObject(Connection::class.java)
                         val connectedUserId = doc.id
 
                         if (connection != null) {
-                            // --- 4. Fetch the connected user's profile and the event details ---
                             val userDoc = db.collection("users").document(connectedUserId).get().await()
                             val eventDoc = db.collection("events").document(connection.eventId).get().await()
 
                             val user = userDoc.toObject(User::class.java)
                             val event = eventDoc.toObject(Event::class.java)
 
-                            if (user != null && event != null) {
+                            if (user != null) {
+                                // --- THE FIX ---
+                                // If the event is found, use its title.
+                                // If not (because it was deleted), use a default message.
+                                val eventName = event?.title ?: "a past event"
+
                                 ConnectionInfo(
                                     userId = user.id,
                                     userName = user.name,
                                     userAvatarUrl = user.avatarUrl,
-                                    fromEvent = "From ${event.title}",
-                                    matchDate = connection.connectedAt?.toDate().toString() // You can format this date later
+                                    fromEvent = "From $eventName",
+                                    matchDate = formatTimestamp(connection.connectedAt)
                                 )
                             } else {
                                 null
@@ -76,10 +79,14 @@ class ConnectionViewModel : ViewModel() {
             }
     }
 
+    private fun formatTimestamp(timestamp: Timestamp?): String {
+        if (timestamp == null) return ""
+        val date = timestamp.toDate()
+        return SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(date)
+    }
+
     fun clearDataAndListeners() {
         connectionsListener?.remove()
         _connections.value = emptyList()
     }
 }
-
-
