@@ -28,13 +28,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.ConnectionInfo
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
+import com.infiniteflux.login_using_firebase.viewmodel.ChatViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ConnectionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ConnectionScreen(navController: NavController, viewModel: ConnectionViewModel) {
+fun ConnectionScreen(navController: NavController,
+                     viewModel: ConnectionViewModel,
+                     chatViewModel: ChatViewModel
+) {
     // --- 1. Start fetching connections when the screen appears ---
     LaunchedEffect(key1 = Unit) {
         viewModel.initializeData()
@@ -75,11 +80,19 @@ fun ConnectionScreen(navController: NavController, viewModel: ConnectionViewMode
             }
             // --- 3. Use the dynamic list of connections ---
             items(connections) { connection ->
-                ConnectionCard(connection = connection, onChatClick = {
-                    // TODO: Navigate to the correct private chat
-                }, onDeleteClick = {
-                    // TODO: Handle delete connection
-                })
+                ConnectionCard(
+                    connection = connection,
+                    onChatClick = {
+                        // --- THE FIX: Call the ViewModel to get the chat room and then navigate ---
+                        chatViewModel.getOrCreateChatRoom(connection.userId) { chatRoomId ->
+                            // Navigate to the new private chat screen
+                            navController.navigate("${AppRoutes.PRIVATE_CHAT}/$chatRoomId/${connection.userName}")
+                        }
+                    },
+                    onDeleteClick = {
+                        // TODO: Handle delete connection
+                    }
+                )
             }
         }
     }
@@ -150,6 +163,6 @@ fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDelete
 fun ConnectionsScreenPreview() {
     Login_Using_FirebaseTheme {
         // Preview will show an empty list, which is expected
-        ConnectionScreen(navController = rememberNavController(), viewModel = viewModel())
+        ConnectionScreen(navController = rememberNavController(), viewModel = viewModel(), chatViewModel = viewModel())
     }
 }

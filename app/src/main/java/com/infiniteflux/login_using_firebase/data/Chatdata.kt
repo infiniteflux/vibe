@@ -38,3 +38,10 @@ data class Message(
     @ServerTimestamp
     val timestamp: Timestamp? = null
 )
+
+data class ChatRoom(
+    val id: String = "",
+    val participants: List<String> = emptyList(),
+    // You can add last message details here later, just like in your Group class
+)
+

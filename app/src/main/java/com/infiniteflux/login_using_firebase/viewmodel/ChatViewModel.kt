@@ -2,6 +2,7 @@ package com.infiniteflux.login_using_firebase.viewmodel
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
@@ -14,7 +15,10 @@ import com.infiniteflux.login_using_firebase.data.User
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.ktx.storage
+import com.infiniteflux.login_using_firebase.data.ChatRoom
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 
@@ -188,6 +192,58 @@ class ChatViewModel : ViewModel() {
                 _groupReadStatus.value = statusMap
             }
     }
+
+    // private chat started from here ..
+    fun getOrCreateChatRoom(otherUserId: String, onComplete: (String) -> Unit) {
+        if (currentUserId == null) return
+
+        val chatRoomId = if (currentUserId!! > otherUserId) {
+            "${currentUserId}_${otherUserId}"
+        } else {
+            "${otherUserId}_${currentUserId}"
+        }
+
+        val chatRoomRef = db.collection("chats").document(chatRoomId)
+
+        viewModelScope.launch {
+            try {
+                val document = chatRoomRef.get().await()
+                if (!document.exists()) {
+                    val newChatRoom = ChatRoom(
+                        id = chatRoomId,
+                        participants = listOf(currentUserId!!, otherUserId)
+                    )
+                    chatRoomRef.set(newChatRoom).await()
+                }
+                onComplete(chatRoomId)
+            } catch (e: Exception) {
+                // Handle errors
+            }
+        }
+    }
+
+    fun listenForPrivateChatMessages(chatRoomId: String) {
+        messagesListener = db.collection("chats").document(chatRoomId)
+            .collection("messages")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(50)
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+                _messages.value = snapshots.documents.mapNotNull {
+                    it.toObject(Message::class.java)?.copy(id = it.id)
+                }
+            }
+    }
+    fun sendPrivateMessage(chatRoomId: String, text: String, senderName: String) {
+        if (currentUserId == null || text.isBlank()) return
+        val message = Message(
+            text = text,
+            senderId = currentUserId!!,
+            senderName = senderName
+        )
+        db.collection("chats").document(chatRoomId).collection("messages").add(message)
+    }
+
 
     // --- 4. Add a function to clear data and remove listeners ---
     fun clearDataAndListeners() {

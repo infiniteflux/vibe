@@ -209,7 +209,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 }
 
                 composable(AppRoutes.CONNECTION){
-                    ConnectionScreen(navController = navController, viewModel = connectionViewModel)
+                    ConnectionScreen(navController = navController, viewModel = connectionViewModel, chatViewModel = chatViewModel)
                 }
 
                 composable(AppRoutes.WALLOFSHAME){
@@ -225,6 +225,26 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                         RateAttendeesScreen(navController = navController, eventId = eventId)
                     }
                 }
+
+                composable(
+                    route = "${AppRoutes.PRIVATE_CHAT}/{chatRoomId}/{otherUserName}",
+                    arguments = listOf(
+                        navArgument("chatRoomId") { type = NavType.StringType },
+                        navArgument("otherUserName") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val chatRoomId = backStackEntry.arguments?.getString("chatRoomId")
+                    val otherUserName = backStackEntry.arguments?.getString("otherUserName")
+                    if (chatRoomId != null && otherUserName != null) {
+                        PrivateChatScreen(
+                            navController = navController,
+                            chatRoomId = chatRoomId,
+                            otherUserName = otherUserName
+                        )
+                    }
+                }
+
+
             }
 
             if (showLoginPrompt) {

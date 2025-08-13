@@ -38,6 +38,7 @@ object AppRoutes {
     const val CONNECTION = "Connection"
     const val WALLOFSHAME = "Wall Of Shame"
     const val RATE_ATTENDEES= "Rate_Attendees"
+    const val PRIVATE_CHAT = "private_chat"
 }
 
 class MainActivity : ComponentActivity() {

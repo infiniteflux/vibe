@@ -121,7 +121,7 @@ fun GroupChatScreen(
 }
 
 @Composable
-private fun MessageBubble(message: Message, isFromCurrentUser: Boolean) {
+fun MessageBubble(message: Message, isFromCurrentUser: Boolean) {
     val alignment = if (isFromCurrentUser) Alignment.CenterEnd else Alignment.CenterStart
     val backgroundColor = if (isFromCurrentUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
     val bubbleShape = if (isFromCurrentUser) {
@@ -173,7 +173,7 @@ private fun MessageBubble(message: Message, isFromCurrentUser: Boolean) {
 
 
 @Composable
-private fun MessageInput(value: String, onValueChange: (String) -> Unit, onSendClick: () -> Unit) {
+fun MessageInput(value: String, onValueChange: (String) -> Unit, onSendClick: () -> Unit) {
     Surface(tonalElevation = 4.dp) {
         Row(
             modifier = Modifier
