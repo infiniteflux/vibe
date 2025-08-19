@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +50,7 @@ fun ConnectionScreen(navController: NavController,
 
     // --- 2. Collect the live list of connections from the ViewModel ---
     val connections by viewModel.connections.collectAsState()
+    var connectionToDelete by remember { mutableStateOf<ConnectionInfo?>(null) }
 
     Scaffold(
         topBar = {
@@ -90,11 +94,35 @@ fun ConnectionScreen(navController: NavController,
                         }
                     },
                     onDeleteClick = {
-                        // TODO: Handle delete connection
+                        connectionToDelete = connection
                     }
                 )
             }
+
         }
+    }
+    if (connectionToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { connectionToDelete = null },
+            title = { Text("Delete Connection?") },
+            text = { Text("Are you sure you want to delete your connection with ${connectionToDelete!!.userName}?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteConnection(connectionToDelete!!.userId)
+                        connectionToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Text("Yes, Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { connectionToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

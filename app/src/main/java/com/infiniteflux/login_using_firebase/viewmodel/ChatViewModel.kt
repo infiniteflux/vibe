@@ -241,7 +241,15 @@ class ChatViewModel : ViewModel() {
             senderId = currentUserId!!,
             senderName = senderName
         )
-        db.collection("chats").document(chatRoomId).collection("messages").add(message)
+        val chatRoomRef = db.collection("chats").document(chatRoomId)
+        chatRoomRef.collection("messages").add(message)
+
+        // Update last message details
+        chatRoomRef.update(
+            "lastMessageText", text,
+            "lastMessageSenderName", senderName,
+            "lastMessageTimestamp", FieldValue.serverTimestamp()
+        )
     }
 
 

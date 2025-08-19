@@ -32,6 +32,19 @@ class ConnectionViewModel : ViewModel() {
     fun initializeData() {
         fetchConnections()
     }
+    // --- NEW FUNCTION to delete a connection for both users ---
+    fun deleteConnection(otherUserId: String) {
+        if (currentUserId == null) return
+
+        // Delete the connection from the current user's profile
+        db.collection("users").document(currentUserId!!)
+            .collection("connections").document(otherUserId).delete()
+
+        // Delete the connection from the other user's profile
+        db.collection("users").document(otherUserId)
+            .collection("connections").document(currentUserId!!).delete()
+    }
+
 
     private fun fetchConnections() {
         if (currentUserId == null) return
