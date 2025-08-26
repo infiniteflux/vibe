@@ -9,7 +9,9 @@ data class User(
     val avatarUrl: String = "",
     val aboutMe: String = "",
     val interests: List<String> = emptyList(),
-    val role: String = "user"
+    val role: String = "user",
+    val isBanned: Boolean = false,
+    val university: String = ""
 )
 
 data class Group(

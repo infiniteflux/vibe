@@ -2,53 +2,82 @@ package com.infiniteflux.login_using_firebase.viewmodel
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
-import com.infiniteflux.login_using_firebase.R
-
-// Data class for a reported user
-data class ReportedUser(
-    val id: Int,
-    val name: String,
-    val university: String,
-    val totalReports: Int,
-    val verifiedReports: Int,
-    val lastIncidentDays: String,
-    val reportedFor: List<String>,
-    val avatarRes: Int?, // Nullable for users without an avatar
-    val warningLevel: WarningLevel
-)
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
+import com.infiniteflux.login_using_firebase.data.ReportedUser
+import com.infiniteflux.login_using_firebase.data.Report
+import com.infiniteflux.login_using_firebase.data.User
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeUnit
 
 enum class WarningLevel(val text: String, val color: Color) {
     DANGER("Danger", Color(0xFFE91E63)),
     WARNING("Warning", Color(0xFFFFA000))
 }
 
-// Dummy data for reported users
-private val dummyReportedUsers = listOf(
-    ReportedUser(
-        id = 1,
-        name = "John D.",
-        university = "University of California",
-        totalReports = 5,
-        verifiedReports = 3,
-        lastIncidentDays = "22d",
-        reportedFor = listOf("Harassment", "Inappropriate Behavior"),
-        avatarRes = null, // No avatar for this user
-        warningLevel = WarningLevel.DANGER
-    ),
-    ReportedUser(
-        id = 2,
-        name = "Mike S.",
-        university = "Stanford University",
-        totalReports = 3,
-        verifiedReports = 2,
-        lastIncidentDays = "23d",
-        reportedFor = listOf("Fake Profile", "Safety Concern"),
-        avatarRes = R.drawable.lazy, // Make sure you have this drawable
-        warningLevel = WarningLevel.WARNING
-    )
-)
 
 class WallOfShameViewModel : ViewModel() {
-    val reportedUsers = dummyReportedUsers
-    // In a real app, this data would be fetched from a secure backend
+    private val db = Firebase.firestore
+
+    private val _reportedUsers = MutableStateFlow<List<ReportedUser>>(emptyList())
+    val reportedUsers: StateFlow<List<ReportedUser>> = _reportedUsers
+
+    private var bannedUsersListener: ListenerRegistration? = null
+
+    fun initializeData() {
+        fetchWallOfShame()
+    }
+
+    private fun fetchWallOfShame() {
+        bannedUsersListener?.remove()
+        bannedUsersListener = db.collection("users")
+            .whereEqualTo("isBanned", true)
+            .addSnapshotListener { snapshots, _ ->
+                if (snapshots == null) return@addSnapshotListener
+
+                viewModelScope.launch {
+                    val bannedUserProfiles = snapshots.toObjects(User::class.java)
+
+                    val reportedUsersList = bannedUserProfiles.mapNotNull { user ->
+                        val reports = db.collection("reports")
+                            .whereEqualTo("reportedUserId", user.id)
+                            .get().await().toObjects(Report::class.java)
+
+                        if (reports.isNotEmpty()) {
+                            val totalReports = reports.size
+                            val verifiedReports = reports.count { it.verified }
+                            val lastIncidentTimestamp = reports.maxOfOrNull { it.timestamp!! }?.toDate()?.time ?: 0
+                            val daysSinceLastIncident = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastIncidentTimestamp)
+                            val reasons = reports.map { it.reason }.distinct()
+                            val warningLevel = if (verifiedReports >= 3) WarningLevel.DANGER else WarningLevel.WARNING
+
+                            ReportedUser(
+                                id = user.id,
+                                name = user.name,
+                                university = user.university,
+                                totalReports = totalReports,
+                                verifiedReports = verifiedReports,
+                                lastIncidentDays = "${daysSinceLastIncident}d",
+                                reportedFor = reasons,
+                                avatarUrl = user.avatarUrl,
+                                warningLevel = warningLevel
+                            )
+                        } else {
+                            null
+                        }
+                    }
+                    _reportedUsers.value = reportedUsersList
+                }
+            }
+    }
+
+    fun clearDataAndListeners() {
+        bannedUsersListener?.remove()
+        _reportedUsers.value = emptyList()
+    }
 }

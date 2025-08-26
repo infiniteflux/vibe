@@ -12,12 +12,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,13 +28,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
-import com.infiniteflux.login_using_firebase.viewmodel.ReportedUser
+import com.infiniteflux.login_using_firebase.data.ReportedUser
 import com.infiniteflux.login_using_firebase.viewmodel.WallOfShameViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewModel) {
+    // --- 1. Start fetching data when the screen appears ---
+    LaunchedEffect(key1 = Unit) {
+        viewModel.initializeData()
+    }
+
+    // --- 2. Collect the live list of reported users ---
+    val reportedUsers by viewModel.reportedUsers.collectAsState()
+
     Scaffold(
         topBar = {
             Row(
@@ -67,12 +78,13 @@ fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewMo
                 CommunitySafetyCard()
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    "${viewModel.reportedUsers.size} users with safety concerns",
+                    "${reportedUsers.size} users with safety concerns",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            items(viewModel.reportedUsers) { user ->
+            // --- 3. Use the dynamic list of users ---
+            items(reportedUsers) { user ->
                 ReportedUserCard(user = user)
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -117,9 +129,10 @@ fun ReportedUserCard(user: ReportedUser) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (user.avatarRes != null) {
-                        Image(
-                            painter = painterResource(id = user.avatarRes),
+                    // --- 4. Use AsyncImage to load the avatar from a URL ---
+                    if (user.avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = user.avatarUrl,
                             contentDescription = user.name,
                             modifier = Modifier
                                 .size(48.dp)
@@ -160,7 +173,6 @@ fun ReportedUserCard(user: ReportedUser) {
                     AssistChip(
                         onClick = { },
                         label = { Text(reason) },
-                        // FIX: Replaced AssistChipDefaults.assistChipBorder with a direct BorderStroke
                         border = BorderStroke(1.dp, Color.Gray)
                     )
                 }
