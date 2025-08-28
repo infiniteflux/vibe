@@ -16,11 +16,3 @@ data class ReportedUser(
     val warningLevel: WarningLevel
 )
 
-data class Report(
-    val reportedUserId: String = "",
-    val reporterId: String = "",
-    val reason: String = "",
-    @ServerTimestamp
-    val timestamp: Timestamp? = null,
-    val verified: Boolean = false // Field for admins to verify a report
-)
