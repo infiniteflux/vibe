@@ -24,6 +24,7 @@ import com.infiniteflux.login_using_firebase.screens.profile.ProfileScreen
 import com.infiniteflux.login_using_firebase.screens.login.SignUpScreen
 import com.infiniteflux.login_using_firebase.screens.login.VerificationScreen
 import com.infiniteflux.login_using_firebase.screens.profile.EditProfileScreen
+import com.infiniteflux.login_using_firebase.screens.profile.Report.ReportUserScreen
 import com.infiniteflux.login_using_firebase.screens.profile.WallOfShame.WallOfShameScreen
 import com.infiniteflux.login_using_firebase.screens.profile.connection.ConnectionScreen
 import com.infiniteflux.login_using_firebase.viewmodel.*
@@ -34,7 +35,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                      profileViewModel: ProfileViewModel,
                      homeViewModel: HomeViewModel,
                      connectionViewModel: ConnectionViewModel,
-                     wallOfShameViewModel: WallOfShameViewModel
+                     wallOfShameViewModel: WallOfShameViewModel,
+                     reportViewModel: ReportViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -242,6 +244,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                             otherUserName = otherUserName
                         )
                     }
+                }
+
+                composable(AppRoutes.REPORT_USER) { // Make sure to add REPORT_USER to your AppRoutes object
+                    ReportUserScreen(navController = navController, viewModel = reportViewModel )
                 }
 
 

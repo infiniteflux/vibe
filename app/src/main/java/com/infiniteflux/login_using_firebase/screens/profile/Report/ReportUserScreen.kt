@@ -19,7 +19,7 @@ import com.infiniteflux.login_using_firebase.viewmodel.ReportViewModel
 @Composable
 fun ReportUserScreen(
     navController: NavController,
-    viewModel: ReportViewModel = viewModel()
+    viewModel: ReportViewModel
 ) {
     LaunchedEffect(Unit) {
         viewModel.initializeData()

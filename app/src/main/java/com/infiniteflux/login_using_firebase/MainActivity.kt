@@ -18,6 +18,7 @@ import com.infiniteflux.login_using_firebase.viewmodel.ConnectionViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.EventsViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ReportViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.WallOfShameViewModel
 
 object AppRoutes {
@@ -39,6 +40,7 @@ object AppRoutes {
     const val WALLOFSHAME = "Wall Of Shame"
     const val RATE_ATTENDEES= "Rate_Attendees"
     const val PRIVATE_CHAT = "private_chat"
+    const val REPORT_USER = "REPORT_USER"
 }
 
 class MainActivity : ComponentActivity() {
@@ -55,6 +57,7 @@ class MainActivity : ComponentActivity() {
                 val homeViewModel: HomeViewModel = viewModel ()
                 val connectionViewModel: ConnectionViewModel = viewModel()
                 val WallOfShameViewModel: WallOfShameViewModel = viewModel()
+                val ReportViewModel: ReportViewModel = viewModel ()
 
                 NavigationScreen(
                     authViewModel = authViewModel,
@@ -63,7 +66,8 @@ class MainActivity : ComponentActivity() {
                     profileViewModel = profileViewModel,
                     homeViewModel = homeViewModel,
                     connectionViewModel = connectionViewModel,
-                    wallOfShameViewModel = WallOfShameViewModel
+                    wallOfShameViewModel = WallOfShameViewModel,
+                    reportViewModel = ReportViewModel
                 )
             }
         }
