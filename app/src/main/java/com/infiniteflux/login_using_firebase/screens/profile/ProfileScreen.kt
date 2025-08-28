@@ -133,7 +133,8 @@ fun ProfileScreen(
                     AppRoutes.CONNECTION)})
                 ActionItem(icon = Icons.Default.Warning, text = "Wall of Shame", onClick = {navController.navigate(
                     AppRoutes.WALLOFSHAME)})
-                ActionItem(icon = Icons.Default.Flag, text = "Report a User", onClick = {})
+                ActionItem(icon = Icons.Default.Flag, text = "Report a User", onClick = {navController.navigate(
+                    AppRoutes.REPORT_USER)})
                 ActionItem(icon = Icons.Default.Palette, text = "Theme", trailingText = "Light", onClick = {})
                 ActionItem(icon = Icons.Default.Settings, text = "Settings", onClick = {})
                 ActionItem(
