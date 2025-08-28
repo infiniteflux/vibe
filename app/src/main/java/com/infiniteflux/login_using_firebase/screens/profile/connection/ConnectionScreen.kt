@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Report
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -150,7 +151,7 @@ fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDelete
                 AssistChip(
                     onClick = { /* No action */ },
                     label = { Text("Report") }, // You can make this dynamic if you store it
-                    leadingIcon = { Icon(Icons.Default.People, contentDescription = null) }
+                    leadingIcon = { Icon(Icons.Default.Report, contentDescription = null) }
                 )
                 Text(connection.matchDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
