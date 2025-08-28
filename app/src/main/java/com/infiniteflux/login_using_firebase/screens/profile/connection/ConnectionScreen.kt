@@ -145,6 +145,14 @@ fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDelete
                     leadingIcon = { Icon(Icons.Default.People, contentDescription = null) }
                 )
                 Text(connection.matchDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                Spacer(modifier = Modifier.width(16.dp))
+
+                AssistChip(
+                    onClick = { /* No action */ },
+                    label = { Text("Report") }, // You can make this dynamic if you store it
+                    leadingIcon = { Icon(Icons.Default.People, contentDescription = null) }
+                )
+                Text(connection.matchDate, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
