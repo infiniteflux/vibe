@@ -96,7 +96,8 @@ fun ConnectionScreen(navController: NavController,
                     },
                     onDeleteClick = {
                         connectionToDelete = connection
-                    }
+                    },
+                    navController
                 )
             }
 
@@ -128,7 +129,7 @@ fun ConnectionScreen(navController: NavController,
 }
 
 @Composable
-fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDeleteClick: () -> Unit) {
+fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDeleteClick: () -> Unit, navController: NavController) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -149,7 +150,7 @@ fun ConnectionCard(connection: ConnectionInfo, onChatClick: () -> Unit, onDelete
                 Spacer(modifier = Modifier.width(16.dp))
 
                 AssistChip(
-                    onClick = { /* No action */ },
+                    onClick = {navController.navigate(AppRoutes.REPORT_USER)},
                     label = { Text("Report") }, // You can make this dynamic if you store it
                     leadingIcon = { Icon(Icons.Default.Report, contentDescription = null) }
                 )
