@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -29,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.ui.theme.Login_Using_FirebaseTheme
 import com.infiniteflux.login_using_firebase.data.ReportedUser
 import com.infiniteflux.login_using_firebase.viewmodel.WallOfShameViewModel
@@ -53,7 +55,7 @@ fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewMo
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
                 Text(
                     "Wall of Shame",
@@ -85,7 +87,7 @@ fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewMo
             }
             // --- 3. Use the dynamic list of users ---
             items(reportedUsers) { user ->
-                ReportedUserCard(user = user)
+                ReportedUserCard(user = user,navController)
                 Spacer(modifier = Modifier.height(16.dp))
             }
             item {
@@ -119,7 +121,7 @@ fun CommunitySafetyCard() {
 }
 
 @Composable
-fun ReportedUserCard(user: ReportedUser) {
+fun ReportedUserCard(user: ReportedUser,navController: NavController) {
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -179,7 +181,7 @@ fun ReportedUserCard(user: ReportedUser) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
-                onClick = { /* TODO: Handle report this user */ },
+                onClick = { navController.navigate(AppRoutes.REPORT_USER)},
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50)
             ) {

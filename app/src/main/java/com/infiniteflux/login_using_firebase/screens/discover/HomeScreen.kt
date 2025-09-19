@@ -49,7 +49,7 @@ fun HomeScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        TopBar(userName = userName)
+        TopBar(userName = userName,navController)
 
         Column(
             modifier = Modifier
@@ -89,7 +89,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopBar(userName: String) {
+fun TopBar(userName: String,navController: NavController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,6 +120,7 @@ fun TopBar(userName: String) {
                 imageVector = Icons.Outlined.Notifications,
                 contentDescription = "Notifications",
                 modifier = Modifier.size(32.dp)
+                    .clickable{navController.navigate(AppRoutes.NOTIFICATION)}
             )
         }
     }

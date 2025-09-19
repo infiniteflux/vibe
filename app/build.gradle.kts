@@ -61,6 +61,7 @@ dependencies {
     // Corrected Firebase Libraries
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.messaging.ktx)
 
 
     implementation("io.coil-kt:coil-compose:2.6.0")

@@ -28,6 +28,14 @@ class AuthViewModel : ViewModel() {
         //checkAuthState()
     }
 
+    fun saveFcmToken(token: String) {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            db.collection("users").document(currentUser.uid)
+                .update("fcmToken", token)
+        }
+    }
+
     fun checkAuthState() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
@@ -148,10 +156,17 @@ class AuthViewModel : ViewModel() {
     }
 
 
-    fun signout(){
+    // --- Update your signout function to remove the token ---
+    fun signout() {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            // Remove the FCM token so the user no longer receives notifications
+            db.collection("users").document(currentUser.uid)
+                .update("fcmToken", null) // Or FieldValue.delete()
+        }
         auth.signOut()
+        _authState.value = AuthState.Guest
         _userRole.value = "user"
-        _authState.value = AuthState.Unauthenticated
     }
 }
 

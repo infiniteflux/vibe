@@ -1,5 +1,9 @@
 package com.infiniteflux.login_using_firebase.navcontroller
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
@@ -10,7 +14,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
 import com.infiniteflux.login_using_firebase.AppRoutes
+import com.infiniteflux.login_using_firebase.screens.Notification.NotificationScreen
 import com.infiniteflux.login_using_firebase.screens.chat.*
 import com.infiniteflux.login_using_firebase.sharedComponents.BottomNavigationBar
 import com.infiniteflux.login_using_firebase.screens.event.EventDetailsScreen
@@ -36,7 +43,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                      homeViewModel: HomeViewModel,
                      connectionViewModel: ConnectionViewModel,
                      wallOfShameViewModel: WallOfShameViewModel,
-                     reportViewModel: ReportViewModel
+                     reportViewModel: ReportViewModel,
+                     notificationViewModel: NotificationViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -52,6 +60,24 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
         AppRoutes.PROFILE
     )
 
+
+    // --- ADD THIS LOGIC FOR NOTIFICATION PERMISSIONS ---
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                // Permission was granted, now get the FCM token
+                Firebase.messaging.token.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val token = task.result
+                        authViewModel.saveFcmToken(token)
+                    }
+                }
+            }
+            // You can optionally handle the case where permission is denied
+            // e.g., show a Snackbar explaining why the permission is useful.
+        }
+    )
     // This LaunchedEffect is the single source of truth for auth navigation
     // after the initial splash screen.
     LaunchedEffect(authState) {
@@ -64,10 +90,26 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                 profileViewModel.initializeData()
                 connectionViewModel.initializeData()
 
+                // --- FIX 2: HANDLE PERMISSIONS AND TOKEN LOGIC HERE ---
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // For Android 13+, launch the permission request
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    // For older versions, permission is granted via the Manifest,
+                    // so we can just get the token directly.
+                    Firebase.messaging.token.addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val token = task.result
+                            authViewModel.saveFcmToken(token)
+                        }
+                    }
+                }
+
                 navController.navigate(AppRoutes.HOME) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }
+
             is AuthState.Unauthenticated -> {
                 // After logout, enter guest mode, which will then trigger navigation to Events
                 authViewModel.enterGuestMode()
@@ -248,6 +290,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
 
                 composable(AppRoutes.REPORT_USER) { // Make sure to add REPORT_USER to your AppRoutes object
                     ReportUserScreen(navController = navController, viewModel = reportViewModel )
+                }
+
+                composable (AppRoutes.NOTIFICATION){
+                    NotificationScreen(navController = navController, viewModel  = notificationViewModel)
                 }
 
 
