@@ -40,14 +40,18 @@ fun NotificationScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Notifications") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                IconButton(onClick = {navController.navigateUp()}) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-            )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Notifications", style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold))
+            }
         }
     ) { padding ->
         if (notifications.isEmpty()) {
