@@ -29,19 +29,13 @@ import kotlinx.coroutines.delay
 fun SplashScreen(navController: NavController, authViewModel: AuthViewModel) {
     val scale = remember { Animatable(0f) }
 
-    // This effect runs once to perform the animation and trigger the auth check.
     LaunchedEffect(key1 = true) {
-        // Animate the logo scale
         scale.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 800)
         )
-        // Wait a moment after the animation
-        delay(1000L) // A 1.5 second delay for a smoother feel
+        delay(1000L)
 
-        // --- THE FIX ---
-        // Trigger the authentication check. The LaunchedEffect in NavigationScreen
-        // will see the state change and handle all the navigation logic.
         authViewModel.checkAuthState()
     }
 
@@ -56,7 +50,7 @@ fun SplashScreen(navController: NavController, authViewModel: AuthViewModel) {
             contentDescription = "App Logo",
             modifier = Modifier
                 .size(250.dp)
-                .scale(scale.value) // Apply the animated scale
+                .scale(scale.value)
         )
     }
 }
