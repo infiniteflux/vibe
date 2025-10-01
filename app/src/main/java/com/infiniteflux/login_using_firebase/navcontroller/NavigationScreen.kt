@@ -283,7 +283,9 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                         PrivateChatScreen(
                             navController = navController,
                             chatRoomId = chatRoomId,
-                            otherUserName = otherUserName
+                            otherUserName = otherUserName,
+                            viewModel = chatViewModel,
+                            authViewModel=authViewModel
                         )
                     }
                 }

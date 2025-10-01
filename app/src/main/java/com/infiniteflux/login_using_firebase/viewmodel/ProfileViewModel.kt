@@ -7,19 +7,11 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
+import com.infiniteflux.login_using_firebase.data.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-data class UserProfile(
-    val name: String = "Loading...",
-    val email: String = "",
-    val avatarUrl: String = "",
-    val eventsCount: Int = 0,
-    val connectionsCount: Int = 12,
-    val interestsCount: Int = 0,
-    val aboutMe: String = "No bio yet.",
-    val interests: List<String> = emptyList()
-)
+
 
 class ProfileViewModel : ViewModel() {
     private val auth = Firebase.auth
@@ -122,7 +114,7 @@ class ProfileViewModel : ViewModel() {
         profileListener?.remove()
         allEventsListener?.remove()
         joinedEventsListenerForCount?.remove()
-        _userProfile.value = UserProfile() // Reset to default state
+        _userProfile.value = UserProfile()
         _allEventIds.value = emptySet()
         _joinedEventIds.value = emptySet()
     }

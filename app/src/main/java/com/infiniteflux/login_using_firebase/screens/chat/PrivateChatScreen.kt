@@ -24,8 +24,8 @@ fun PrivateChatScreen(
     navController: NavController,
     chatRoomId: String,
     otherUserName: String,
-    viewModel: ChatViewModel = viewModel(),
-    authViewModel: AuthViewModel = viewModel()
+    viewModel: ChatViewModel,
+    authViewModel: AuthViewModel
 ) {
     var messageText by remember { mutableStateOf("") }
 
