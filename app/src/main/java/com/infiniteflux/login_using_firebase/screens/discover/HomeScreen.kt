@@ -28,17 +28,21 @@ import coil.compose.AsyncImage
 import com.infiniteflux.login_using_firebase.AppRoutes
 import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.viewmodel.AuthViewModel
+import com.infiniteflux.login_using_firebase.viewmodel.ConnectionViewModel
 import com.infiniteflux.login_using_firebase.viewmodel.HomeViewModel
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel,
-    authViewModel: AuthViewModel // 1. Add AuthViewModel
+    authViewModel: AuthViewModel,
+    connectionViewModel: ConnectionViewModel
 ) {
     val userName by viewModel.userName.collectAsState()
     val eventsCount by viewModel.eventsCount.collectAsState()
     val trendingEvents by viewModel.trendingEvents.collectAsState()
+    val connectionCount by connectionViewModel.connectionCount.collectAsState()
+
 
     // --- 2. Observe the user's role and add state for the dialog ---
     val userRole by authViewModel.userRole.observeAsState("user")
@@ -57,7 +61,7 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            StatsSection(eventsCount = eventsCount)
+            StatsSection(eventsCount = eventsCount, connectionCount = connectionCount )
             Spacer(modifier = Modifier.height(24.dp))
             TrendingEventsSection(navController = navController, trendingEvents = trendingEvents)
             Spacer(modifier = Modifier.height(24.dp))
@@ -127,13 +131,13 @@ fun TopBar(userName: String,navController: NavController) {
 }
 
 @Composable
-fun StatsSection(eventsCount: Int) {
+fun StatsSection(eventsCount: Int , connectionCount: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceAround
     ) {
         StatCard(value = eventsCount.toString(), "Events", Icons.Default.Event)
-        StatCard("12", "Connections", Icons.Default.People)
+        StatCard(value = connectionCount.toString(), "Connections", Icons.Default.People)
         StatCard("0", "This Week", Icons.AutoMirrored.Filled.TrendingUp)
     }
 }

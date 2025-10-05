@@ -11,6 +11,7 @@ import com.infiniteflux.login_using_firebase.data.Connection
 import com.infiniteflux.login_using_firebase.data.ConnectionInfo
 import com.infiniteflux.login_using_firebase.data.Event
 import com.infiniteflux.login_using_firebase.data.User
+import com.infiniteflux.login_using_firebase.data.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -26,8 +27,11 @@ class ConnectionViewModel : ViewModel() {
 
     private val _connections = MutableStateFlow<List<ConnectionInfo>>(emptyList())
     val connections: StateFlow<List<ConnectionInfo>> = _connections
-
     private var connectionsListener: ListenerRegistration? = null
+
+    // connection count
+    private val _connectionCount = MutableStateFlow(0)
+    val connectionCount: MutableStateFlow<Int> = _connectionCount
 
     fun initializeData() {
         fetchConnections()
@@ -46,6 +50,8 @@ class ConnectionViewModel : ViewModel() {
     }
 
 
+
+
     private fun fetchConnections() {
         if (currentUserId == null) return
         connectionsListener?.remove()
@@ -54,6 +60,8 @@ class ConnectionViewModel : ViewModel() {
             .collection("connections")
             .addSnapshotListener { snapshots, _ ->
                 if (snapshots == null) return@addSnapshotListener
+
+                _connectionCount.value = snapshots.size()
 
                 viewModelScope.launch {
                     val connectionInfos = snapshots.documents.mapNotNull { doc ->
@@ -78,7 +86,7 @@ class ConnectionViewModel : ViewModel() {
                                     userName = user.name,
                                     userAvatarUrl = user.avatarUrl,
                                     fromEvent = "From $eventName",
-                                    matchDate = formatTimestamp(connection.connectedAt)
+                                    matchDate = formatTimestamp(connection.connectedAt),
                                 )
                             } else {
                                 null
@@ -91,6 +99,8 @@ class ConnectionViewModel : ViewModel() {
                 }
             }
     }
+
+
 
     private fun formatTimestamp(timestamp: Timestamp?): String {
         if (timestamp == null) return ""

@@ -48,6 +48,7 @@ fun ProfileScreen(
     connectionViewModel: ConnectionViewModel
 ) {
     val user by viewModel.userProfile.collectAsState()
+    val connectionCount by connectionViewModel.connectionCount.collectAsState()
 
 
     LazyColumn(
@@ -95,7 +96,7 @@ fun ProfileScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatCard(count = user.eventsCount, label = "Events", icon = Icons.Default.Event)
-                StatCard(count = user.connectionsCount, label = "Connections", icon = Icons.Default.People)
+                StatCard(count = connectionCount, label = "Connections", icon = Icons.Default.People)
                 StatCard(count = user.interestsCount, label = "Interests", icon = Icons.Default.Favorite)
             }
         }

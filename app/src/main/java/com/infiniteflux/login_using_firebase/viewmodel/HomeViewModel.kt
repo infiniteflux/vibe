@@ -24,6 +24,7 @@ class HomeViewModel : ViewModel() {
     private val _eventsCount = MutableStateFlow(0)
     val eventsCount: MutableStateFlow<Int> = _eventsCount
 
+
     private val _trendingEvents = MutableStateFlow<List<Event>>(emptyList())
     val trendingEvents: StateFlow<List<Event>> = _trendingEvents
 
@@ -114,6 +115,8 @@ class HomeViewModel : ViewModel() {
         _eventsCount.value = existingJoinedEvents.size
         Log.d("HomeViewModel", "Recalculated joined events count: ${_eventsCount.value}")
     }
+
+
 
     fun clearDataAndListeners() {
         Log.d("HomeViewModel", "Clearing all data and listeners.")

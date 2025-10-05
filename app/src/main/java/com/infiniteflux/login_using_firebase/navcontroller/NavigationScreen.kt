@@ -158,7 +158,8 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     SignUpScreen(navController, authViewModel)
                 }
                 composable(AppRoutes.HOME) {
-                    HomeScreen(navController, viewModel = homeViewModel,authViewModel=authViewModel)
+                    HomeScreen(navController, viewModel = homeViewModel,authViewModel=authViewModel,
+                        connectionViewModel = connectionViewModel)
                 }
                 composable(AppRoutes.EVENTS) {
                     EventsScreen(
