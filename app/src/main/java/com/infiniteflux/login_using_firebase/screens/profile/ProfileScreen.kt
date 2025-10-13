@@ -1,5 +1,6 @@
 package com.infiniteflux.login_using_firebase.screens.profile
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +43,7 @@ import com.infiniteflux.login_using_firebase.viewmodel.ProfileViewModel
 fun ProfileScreen(
     navController: NavController,
     viewModel: ProfileViewModel,
-    authViewModel: AuthViewModel,// Get instance of AuthViewModel for logout
+    authViewModel: AuthViewModel,
     chatViewModel: ChatViewModel,
     eventsViewModel: EventsViewModel,
     homeViewModel: HomeViewModel,
@@ -49,6 +51,7 @@ fun ProfileScreen(
 ) {
     val user by viewModel.userProfile.collectAsState()
     val connectionCount by connectionViewModel.connectionCount.collectAsState()
+    val context = LocalContext.current
 
 
     LazyColumn(
@@ -136,8 +139,8 @@ fun ProfileScreen(
                     AppRoutes.WALLOFSHAME)})
                 ActionItem(icon = Icons.Default.Flag, text = "Report a User", onClick = {navController.navigate(
                     AppRoutes.REPORT_USER)})
-                ActionItem(icon = Icons.Default.Palette, text = "Theme", trailingText = "Light", onClick = {})
-                ActionItem(icon = Icons.Default.Settings, text = "Settings", onClick = {})
+                ActionItem(icon = Icons.Default.Palette, text = "Theme", trailingText = "Light", onClick = { Toast.makeText(context, "Coming Soon", Toast.LENGTH_SHORT).show()})
+                ActionItem(icon = Icons.Default.Settings, text = "Settings", onClick = {Toast.makeText(context, "Coming Soon", Toast.LENGTH_SHORT).show()})
                 ActionItem(
                     icon = Icons.AutoMirrored.Filled.Logout,
                     text = "Logout",
