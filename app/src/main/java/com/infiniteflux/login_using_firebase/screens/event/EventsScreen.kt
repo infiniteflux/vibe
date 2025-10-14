@@ -253,7 +253,6 @@ fun EventCard(
                 )
             }
             Column(modifier = Modifier.padding(16.dp)) {
-                // --- THE FIX: Added the missing Text and Icon rows back ---
                 Text(event.title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -268,7 +267,6 @@ fun EventCard(
                     Text(event.date, color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                // --- END FIX ---
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

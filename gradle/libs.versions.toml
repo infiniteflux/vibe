@@ -14,8 +14,7 @@ navigationCompose = "2.9.3"
 runtimeLivedata = "1.8.3"
 coilCompose = "2.6.0"
 
-# This is the ONLY Firebase version you need to define.
-# It's a stable version known to be compatible with many projects.
+# firebase
 firebase-bom = "33.1.2"
 foundation = "1.8.3"
 

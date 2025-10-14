@@ -91,7 +91,6 @@ fun ProfileScreen(
         }
 
         item {
-            // Stats Section
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,12 +104,10 @@ fun ProfileScreen(
         }
 
         item {
-            // About Me Section
             InfoCard(title = "About Me") {
-                // --- FIX 1: Wrapped the Text in a scrollable Box with a fixed height ---
                 Box(
                     modifier = Modifier
-                        .heightIn(max = 120.dp) // Set a max height
+                        .heightIn(max = 120.dp)
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(user.aboutMe, style = MaterialTheme.typography.bodyLarge)
@@ -121,7 +118,6 @@ fun ProfileScreen(
         item {
             // My Interests Section
             InfoCard(title = "My Interests") {
-                // --- FIX 2: Replaced Row with LazyRow for horizontal scrolling ---
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(user.interests) { interest ->
                         AssistChip(onClick = { }, label = { Text(interest) })
@@ -146,14 +142,11 @@ fun ProfileScreen(
                     text = "Logout",
                     color = Color.Red,
                     onClick = {
-                        // --- 2. Clear all data BEFORE signing out ---
                         chatViewModel.clearDataAndListeners()
                         eventsViewModel.clearDataAndListeners()
                         homeViewModel.clearDataAndListeners()
-                        viewModel.clearDataAndListeners() //  this is profile view model
+                        viewModel.clearDataAndListeners()
                         connectionViewModel.clearDataAndListeners()
-
-                        // Now, sign out
                         authViewModel.signout()
                     }
                 )
@@ -162,7 +155,6 @@ fun ProfileScreen(
     }
 }
 
-// (StatCard, InfoCard, and ActionItem composables remain the same)
 @Composable
 fun StatCard(count: Int, label: String, icon: ImageVector) {
     Card(

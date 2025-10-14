@@ -40,7 +40,6 @@ fun AddMemberScreen(
         }
     }
 
-    // Filter out users who are already members
     val potentialMembers = allUsers.filter { user ->
         group?.memberIds?.contains(user.id) == false
     }
@@ -50,7 +49,7 @@ fun AddMemberScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp), // Your desired padding
+                    .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = { navController.navigateUp() }) {
@@ -75,7 +74,6 @@ fun AddMemberScreen(
                     member = user,
                     modifier = Modifier.clickable {
                         viewModel.addMemberToGroup(groupId, user.id)
-                        // Go back to the previous screen after adding the member
                         navController.navigateUp()
                     }
                 )

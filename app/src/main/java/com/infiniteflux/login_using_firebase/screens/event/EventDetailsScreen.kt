@@ -87,7 +87,6 @@ fun EventDetailsScreen(
                             onLoginRequired()
                         } else {
                             if (!isJoined) {
-                                // --- 2. Show the confirmation dialog first ---
                                 showJoinConfirmDialog = true
                             }
                         }
@@ -159,7 +158,6 @@ fun EventDetailsScreen(
         }
     }
 
-    // --- 3. Confirmation Dialog ---
     if (showJoinConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showJoinConfirmDialog = false },
@@ -169,7 +167,7 @@ fun EventDetailsScreen(
                 Button(onClick = {
                     viewModel.toggleJoinedStatus(event.id)
                     showJoinConfirmDialog = false
-                    showCongratsDialog = true // Show the next dialog
+                    showCongratsDialog = true
                 }) {
                     Text("Yes, Join")
                 }
@@ -182,7 +180,6 @@ fun EventDetailsScreen(
         )
     }
 
-    // --- 4. Congratulations Dialog ---
     if (showCongratsDialog) {
         AlertDialog(
             onDismissRequest = { showCongratsDialog = false },

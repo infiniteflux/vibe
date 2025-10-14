@@ -18,7 +18,6 @@ import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
-    // --- 1. Accept the auth state and the login prompt trigger ---
     authState: AuthState?,
     onLoginRequired: () -> Unit
 ) {
@@ -48,15 +47,11 @@ fun BottomNavigationBar(
                 label = { Text(screen) },
                 selected = currentDestination?.hierarchy?.any { it.route == route } == true,
                 onClick = {
-                    // --- 2. Add the guest mode logic ---
-                    // Define which routes are protected
                     val protectedRoutes = listOf(AppRoutes.HOME, AppRoutes.CHATS, AppRoutes.PROFILE)
 
                     if (route in protectedRoutes && authState is AuthState.Guest) {
-                        // If the user is a guest and clicks a protected route, show the login prompt
                         onLoginRequired()
                     } else {
-                        // Otherwise, navigate as usual
                         navController.navigate(route) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true

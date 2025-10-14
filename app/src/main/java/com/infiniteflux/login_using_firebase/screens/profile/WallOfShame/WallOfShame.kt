@@ -38,12 +38,10 @@ import com.infiniteflux.login_using_firebase.viewmodel.WallOfShameViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewModel) {
-    // --- 1. Start fetching data when the screen appears ---
     LaunchedEffect(key1 = Unit) {
         viewModel.initializeData()
     }
 
-    // --- 2. Collect the live list of reported users ---
     val reportedUsers by viewModel.reportedUsers.collectAsState()
 
     Scaffold(
@@ -85,7 +83,6 @@ fun WallOfShameScreen(navController: NavController, viewModel: WallOfShameViewMo
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            // --- 3. Use the dynamic list of users ---
             items(reportedUsers) { user ->
                 ReportedUserCard(user = user,navController)
                 Spacer(modifier = Modifier.height(16.dp))
@@ -131,7 +128,6 @@ fun ReportedUserCard(user: ReportedUser,navController: NavController) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // --- 4. Use AsyncImage to load the avatar from a URL ---
                     if (user.avatarUrl.isNotBlank()) {
                         AsyncImage(
                             model = user.avatarUrl,
@@ -142,7 +138,6 @@ fun ReportedUserCard(user: ReportedUser,navController: NavController) {
                             contentScale = ContentScale.Crop
                         )
                     } else {
-                        // Placeholder for users without an avatar
                         Box(
                             modifier = Modifier
                                 .size(48.dp)

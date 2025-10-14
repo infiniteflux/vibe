@@ -44,12 +44,10 @@ fun ConnectionScreen(navController: NavController,
                      viewModel: ConnectionViewModel,
                      chatViewModel: ChatViewModel
 ) {
-    // --- 1. Start fetching connections when the screen appears ---
     LaunchedEffect(key1 = Unit) {
         viewModel.initializeData()
     }
 
-    // --- 2. Collect the live list of connections from the ViewModel ---
     val connections by viewModel.connections.collectAsState()
     var connectionToDelete by remember { mutableStateOf<ConnectionInfo?>(null) }
 
@@ -83,14 +81,11 @@ fun ConnectionScreen(navController: NavController,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
             }
-            // --- 3. Use the dynamic list of connections ---
             items(connections) { connection ->
                 ConnectionCard(
                     connection = connection,
                     onChatClick = {
-                        // --- THE FIX: Call the ViewModel to get the chat room and then navigate ---
                         chatViewModel.getOrCreateChatRoom(connection.userId) { chatRoomId ->
-                            // Navigate to the new private chat screen
                             navController.navigate("${AppRoutes.PRIVATE_CHAT}/$chatRoomId/${connection.userName}")
                         }
                     },

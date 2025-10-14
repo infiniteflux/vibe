@@ -32,7 +32,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    // This is the new, correct way to set the JVM target
     kotlin {
         jvmToolchain(11)
     }

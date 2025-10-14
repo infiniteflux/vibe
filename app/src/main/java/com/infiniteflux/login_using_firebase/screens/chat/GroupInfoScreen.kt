@@ -33,7 +33,7 @@ fun GroupInfoScreen(
     navController: NavController,
     groupId: String,
     viewModel: ChatViewModel,
-    authViewModel: AuthViewModel // 1. Get AuthViewModel
+    authViewModel: AuthViewModel
 ) {
     LaunchedEffect(Unit) {
         viewModel.fetchAllUsers()
@@ -45,7 +45,7 @@ fun GroupInfoScreen(
             derivedStateOf { groupsState.value.find { it.id == groupId } }
         }
     }
-    // 2. Observe the user's role
+
     val userRole by authViewModel.userRole.observeAsState("user")
 
     Scaffold(
@@ -74,7 +74,7 @@ fun GroupInfoScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // 3. Only show the "Add Member" button if the user is a creator
+
             if (userRole == "creator") {
                 Button(onClick = {
                     navController.navigate("${AppRoutes.ADD_MEMBER_TO_GROUP}/$groupId")

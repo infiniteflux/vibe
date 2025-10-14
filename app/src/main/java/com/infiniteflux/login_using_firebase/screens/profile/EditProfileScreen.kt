@@ -39,7 +39,6 @@ fun EditProfileScreen(
     var interests by remember { mutableStateOf(userProfile.interests) }
     var newInterestText by remember { mutableStateOf("") }
 
-    // --- 1. Create the Activity Result Launcher to pick an image ---
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -75,7 +74,7 @@ fun EditProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- 2. Profile Image Section ---
+
             Box(contentAlignment = Alignment.BottomEnd) {
                 AsyncImage(
                     model = userProfile.avatarUrl,

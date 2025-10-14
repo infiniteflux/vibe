@@ -22,9 +22,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 
-// --- The ViewModel Class ---
 class ChatViewModel : ViewModel() {
-    // --- 2. Store your listeners in variables ---
     private var groupsListener: ListenerRegistration? = null
     private var readStatusListener: ListenerRegistration? = null
     private var messagesListener: ListenerRegistration? = null
@@ -82,8 +80,6 @@ class ChatViewModel : ViewModel() {
         onSuccess: () -> Unit
     ) {
         if (currentUserId == null || groupName.isBlank()) return
-
-        // If no image is selected, use a default placeholder and create the group
         if (imageUri == null) {
             val newGroup = Group(
                 name = groupName,
@@ -95,13 +91,11 @@ class ChatViewModel : ViewModel() {
             return
         }
 
-        // If an image is selected, upload it first
         val imageFileName = UUID.randomUUID().toString()
         val storageRef = storage.reference.child("group_avatars/$imageFileName.jpg")
 
         storageRef.putFile(imageUri)
             .addOnSuccessListener {
-                // After upload, get the download URL
                 storageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
                     val newGroup = Group(
                         name = groupName,
@@ -113,7 +107,6 @@ class ChatViewModel : ViewModel() {
                 }
             }
             .addOnFailureListener {
-                // Handle upload failure
             }
     }
 
@@ -166,7 +159,7 @@ class ChatViewModel : ViewModel() {
         groupRef.update(
             "lastMessageText", text,
             "lastMessageSenderName", senderName,
-            "lastMessageTimestamp", FieldValue.serverTimestamp() // Use server timestamp
+            "lastMessageTimestamp", FieldValue.serverTimestamp()
         )
         markGroupAsRead(groupId)
     }
@@ -193,7 +186,6 @@ class ChatViewModel : ViewModel() {
             }
     }
 
-    // private chat started from here ..
     fun getOrCreateChatRoom(otherUserId: String, onComplete: (String) -> Unit) {
         if (currentUserId == null) return
 
@@ -251,9 +243,6 @@ class ChatViewModel : ViewModel() {
             "lastMessageTimestamp", FieldValue.serverTimestamp()
         )
     }
-
-
-    // --- 4. Add a function to clear data and remove listeners ---
     fun clearDataAndListeners() {
         groupsListener?.remove()
         readStatusListener?.remove()

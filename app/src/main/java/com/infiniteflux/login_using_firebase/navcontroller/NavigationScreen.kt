@@ -61,12 +61,10 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
     )
 
 
-    // --- ADD THIS LOGIC FOR NOTIFICATION PERMISSIONS ---
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { isGranted ->
             if (isGranted) {
-                // Permission was granted, now get the FCM token
                 Firebase.messaging.token.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val token = task.result
@@ -74,29 +72,21 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     }
                 }
             }
-            // You can optionally handle the case where permission is denied
-            // e.g., show a Snackbar explaining why the permission is useful.
         }
     )
-    // This LaunchedEffect is the single source of truth for auth navigation
-    // after the initial splash screen.
+
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Authenticated -> {
-                // When a user logs in, re-fetch all their data
                 homeViewModel.initializeData()
                 chatViewModel.initializeData()
                 eventsViewModel.initializeData()
                 profileViewModel.initializeData()
                 connectionViewModel.initializeData()
 
-                // --- FIX 2: HANDLE PERMISSIONS AND TOKEN LOGIC HERE ---
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // For Android 13+, launch the permission request
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 } else {
-                    // For older versions, permission is granted via the Manifest,
-                    // so we can just get the token directly.
                     Firebase.messaging.token.addOnCompleteListener { task ->
                         if (task.isSuccessful) {
                             val token = task.result
@@ -111,11 +101,9 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
             }
 
             is AuthState.Unauthenticated -> {
-                // After logout, enter guest mode, which will then trigger navigation to Events
                 authViewModel.enterGuestMode()
             }
             is AuthState.Guest -> {
-                // When entering guest mode, navigate to the Events screen
                 navController.navigate(AppRoutes.EVENTS) {
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
@@ -125,14 +113,13 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                 }
             }
-            else -> Unit // Do nothing for Loading or initial null state
+            else -> Unit
         }
     }
 
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            // Show bottom bar for guests ONLY on the Events screen
             if (currentRoute == AppRoutes.EVENTS || (currentRoute in screensWithBottomBar && authState is AuthState.Authenticated)) {
                 BottomNavigationBar(
                     navController = navController,
@@ -291,7 +278,7 @@ fun NavigationScreen(modifier: Modifier = Modifier, authViewModel: AuthViewModel
                     }
                 }
 
-                composable(AppRoutes.REPORT_USER) { // Make sure to add REPORT_USER to your AppRoutes object
+                composable(AppRoutes.REPORT_USER) {
                     ReportUserScreen(navController = navController, viewModel = reportViewModel )
                 }
 

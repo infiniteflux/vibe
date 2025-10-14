@@ -36,15 +36,11 @@ class ConnectionViewModel : ViewModel() {
     fun initializeData() {
         fetchConnections()
     }
-    // --- NEW FUNCTION to delete a connection for both users ---
     fun deleteConnection(otherUserId: String) {
         if (currentUserId == null) return
-
-        // Delete the connection from the current user's profile
         db.collection("users").document(currentUserId!!)
             .collection("connections").document(otherUserId).delete()
 
-        // Delete the connection from the other user's profile
         db.collection("users").document(otherUserId)
             .collection("connections").document(currentUserId!!).delete()
     }
@@ -76,9 +72,6 @@ class ConnectionViewModel : ViewModel() {
                             val event = eventDoc.toObject(Event::class.java)
 
                             if (user != null) {
-                                // --- THE FIX ---
-                                // If the event is found, use its title.
-                                // If not (because it was deleted), use a default message.
                                 val eventName = event?.title ?: "a past event"
 
                                 ConnectionInfo(

@@ -1,7 +1,6 @@
 package com.infiniteflux.login_using_firebase.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import com.google.firebase.Timestamp
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -29,11 +28,11 @@ class NotificationViewModel : ViewModel() {
     private fun fetchNotifications() {
         if (currentUserId == null) return
 
-        notificationsListener?.remove() // Remove old listener to prevent duplicates
+        notificationsListener?.remove()
         notificationsListener = db.collection("users").document(currentUserId!!)
             .collection("notifications")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(50) // Get the 50 most recent notifications
+            .limit(50)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     Log.w("NotificationViewModel", "Listen failed.", error)

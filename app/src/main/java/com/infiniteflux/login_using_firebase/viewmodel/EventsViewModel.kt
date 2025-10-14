@@ -25,7 +25,7 @@ class EventsViewModel : ViewModel() {
 
     private val db = Firebase.firestore
     private val auth = Firebase.auth
-    private val storage = Firebase.storage // 1. Get a reference to Storage
+    private val storage = Firebase.storage
     private val currentUserId get() = auth.currentUser?.uid
 
     private val _events = MutableStateFlow<List<Event>>(emptyList())
@@ -51,8 +51,6 @@ class EventsViewModel : ViewModel() {
             return
         }
 
-        // This query requires a Firestore Index. If it fails, check your Logcat for a URL
-        // that will automatically create the index for you.
         db.collectionGroup("joinedEvents").whereEqualTo("eventId", eventId)
             .get()
             .addOnSuccessListener { snapshot ->
@@ -69,14 +67,11 @@ class EventsViewModel : ViewModel() {
                     }
             }
             .addOnFailureListener { exception ->
-                // This will print the error in your logs if the index is missing.
                 Log.e("EventsViewModel", "Error getting attendees: ", exception)
                 onResult(emptyList())
             }
     }
 
-
-    // --- 2. UPDATED: submitRating is now a suspend function that returns a MatchResult ---
     suspend fun submitRating(eventId: String, ratedUserId: String, rating: String): MatchResult {
         if (currentUserId == null) return MatchResult.NoMatch
 
@@ -84,11 +79,7 @@ class EventsViewModel : ViewModel() {
             .collection("ratings").document(currentUserId!!)
 
         val ratingData = mapOf("ratings" to mapOf(ratedUserId to rating))
-
-        // Use await() to make the function wait until the upload is complete
         currentUserRatingRef.set(ratingData, SetOptions.merge()).await()
-
-        // After saving, check for a mutual match and return the result
         return checkForMutualConnection(eventId, ratedUserId, rating)
     }
 
@@ -101,7 +92,6 @@ class EventsViewModel : ViewModel() {
         return try {
             val document = otherUserRatingRef.get().await()
             if (!document.exists()) {
-                // Case 1: They haven't rated anyone yet.
                 return MatchResult.Pending
             }
 
@@ -110,7 +100,6 @@ class EventsViewModel : ViewModel() {
 
             when (theirRatingForMe) {
                 myRating -> {
-                    // Case 2: It's a match! Create the connection.
                     Log.d("EventsViewModel", "Mutual match found! Creating connection.")
                     val connection = Connection(eventId = eventId)
                     db.collection("users").document(currentUserId!!).collection("connections").document(otherUserId).set(connection).await()
@@ -118,32 +107,28 @@ class EventsViewModel : ViewModel() {
                     MatchResult.Match
                 }
                 null -> {
-                    // Case 3: They have rated others, but not me yet.
                     MatchResult.Pending
                 }
                 else -> {
-                    // Case 4: They rated me, but it's a different rating. No connection.
                     MatchResult.NoMatch
                 }
             }
         } catch (e: Exception) {
             Log.e("EventsViewModel", "Error checking for mutual connection", e)
-            MatchResult.NoMatch // Handle any errors
+            MatchResult.NoMatch
         }
     }
 
-
-    // --- 2. UPDATED createEvent function to handle image upload ---
     fun createEvent(
         title: String,
         location: String,
-        dateString: String, // Keep the formatted string for display
+        dateString: String,
         category: String,
         description: String,
         host: String,
         durationHours: Int,
         imageUri: Uri?,
-        eventStartDate: Date, // The actual start date and time
+        eventStartDate: Date,
         onSuccess: () -> Unit
     ) {
         if (title.isBlank() || location.isBlank() || dateString.isBlank() || category.isBlank() || description.isBlank() || host.isBlank()) {
@@ -154,13 +139,12 @@ class EventsViewModel : ViewModel() {
             val newEvent = Event(
                 title = title,
                 location = location,
-                date = dateString, // Save the formatted string
+                date = dateString,
                 category = category,
                 description = description,
                 host = host,
                 imageUrl = imageUrl,
                 durationHours = durationHours,
-                // Convert the user-selected Date into a Firebase Timestamp
                 startTimestamp = Timestamp(eventStartDate)
             )
             db.collection("events").add(newEvent).addOnSuccessListener { onSuccess() }
@@ -223,8 +207,6 @@ class EventsViewModel : ViewModel() {
         joinedEventsListener?.remove()
         _joinedEventIds.value = emptySet()
     }
-
-    // --- NEW FUNCTION to get users already rated by the current user ---
     fun getMyRatedUsersForEvent(eventId: String, onResult: (Set<String>) -> Unit) {
         if (currentUserId == null) {
             onResult(emptySet())
@@ -245,10 +227,9 @@ class EventsViewModel : ViewModel() {
     fun deleteEvent(eventId: String, onSuccess: () -> Unit) {
         db.collection("events").document(eventId).delete()
             .addOnSuccessListener {
-                onSuccess() // This is to navigate back after deletion
+                onSuccess()
             }
             .addOnFailureListener {
-                // Handle any errors, like showing a toast
             }
     }
 }
@@ -256,5 +237,5 @@ class EventsViewModel : ViewModel() {
 sealed class MatchResult {
     object Match : MatchResult()
     object NoMatch : MatchResult()
-    object Pending : MatchResult() // The other user hasn't rated yet
+    object Pending : MatchResult()
 }

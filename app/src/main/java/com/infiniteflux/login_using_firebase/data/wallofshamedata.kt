@@ -5,14 +5,14 @@ import com.google.firebase.firestore.ServerTimestamp
 import com.infiniteflux.login_using_firebase.viewmodel.WarningLevel
 
 data class ReportedUser(
-    val id: String, // Changed to String to match Firestore UID
+    val id: String,
     val name: String,
     val university: String,
     val totalReports: Int,
     val verifiedReports: Int,
     val lastIncidentDays: String,
     val reportedFor: List<String>,
-    val avatarUrl: String, // Changed to String for URL
+    val avatarUrl: String,
     val warningLevel: WarningLevel
 )
 

@@ -18,11 +18,10 @@ data class Event(
 
 )
 
-data class EventRating(
-    val ratings: Map<String, String> = emptyMap()
-)
+//data class EventRating(
+//    val ratings: Map<String, String> = emptyMap()
+//)
 
-// New data class for a connection
 data class Connection(
     val connectedAt: Timestamp? = null,
     val eventId: String = ""

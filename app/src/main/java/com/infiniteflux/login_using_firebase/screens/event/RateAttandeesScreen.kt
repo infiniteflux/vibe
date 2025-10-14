@@ -40,11 +40,9 @@ fun RateAttendeesScreen(
     var attendeesState by remember { mutableStateOf<List<AttendeeRatingState>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
 
-    // --- THE FIX: Fetch attendees AND the list of users you've already rated ---
     LaunchedEffect(key1 = eventId) {
         viewModel.getMyRatedUsersForEvent(eventId) { ratedUserIds ->
             viewModel.getAttendees(eventId) { allAttendees ->
-                // Filter out the users who have already been rated
                 val unratedAttendees = allAttendees.filter { it.id !in ratedUserIds }
                 attendeesState = unratedAttendees.map { AttendeeRatingState(user = it) }
             }

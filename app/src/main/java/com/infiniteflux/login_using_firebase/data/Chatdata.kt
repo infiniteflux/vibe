@@ -20,7 +20,6 @@ data class Group(
     val relatedEvent: String = "",
     val memberIds: List<String> = listOf(),
     val groupAvatarUrl: String = "",
-    // Add fields for the last message
     val lastMessageText: String = "No messages yet.",
     @ServerTimestamp
     val lastMessageTimestamp: Timestamp? = null,
@@ -44,7 +43,6 @@ data class Message(
 data class ChatRoom(
     val id: String = "",
     val participants: List<String> = emptyList(),
-    // You can add last message details here later, just like in your Group class
     val lastMessageText: String = "",
     @ServerTimestamp
     val lastMessageTimestamp: Timestamp? = null,

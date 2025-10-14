@@ -28,7 +28,7 @@ object AppRoutes {
     const val SIGNUP = "signup"
     const val HOME = "home"
     const val EVENTS = "events"
-    const val EVENT_DETAILS = "event_details" // Base route for details
+    const val EVENT_DETAILS = "event_details"
     const val CHATS = "chats"
     const val PROFILE = "profile"
     const val GROUP_INFO = "group_info"

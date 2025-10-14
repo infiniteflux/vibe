@@ -20,13 +20,8 @@ class AuthViewModel : ViewModel() {
     private val _currentUserName = MutableLiveData<String>()
     val currentUserName: LiveData<String> = _currentUserName
 
-    // --- 2. ADD LIVEDATA TO HOLD THE CURRENT USER'S ROLE ---
     private val _userRole = MutableLiveData<String>()
     val userRole: LiveData<String> = _userRole
-
-    init {
-        //checkAuthState()
-    }
 
     fun saveFcmToken(token: String) {
         val currentUser = auth.currentUser
@@ -42,7 +37,6 @@ class AuthViewModel : ViewModel() {
             _authState.value = AuthState.Unauthenticated
             _userRole.value = "user"
         } else {
-            // --- CHANGE 1: Check if the user's email is verified ---
             if (currentUser.isEmailVerified) {
                 fetchUserRole(currentUser.uid)
                 fetchUserName(currentUser.uid)
@@ -56,22 +50,19 @@ class AuthViewModel : ViewModel() {
     private fun fetchUserRole(uid: String) {
         db.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
-                // Get the role from the document, default to "user" if not found
                 _userRole.value = document.getString("role") ?: "user"
             }
             .addOnFailureListener {
-                _userRole.value = "user" // Default to "user" on error
+                _userRole.value = "user"
             }
     }
 
-    // --- 3. Add the new function to fetch the user's name from Firestore ---
     private fun fetchUserName(uid: String) {
         db.collection("users").document(uid).get()
             .addOnSuccessListener { document ->
                 _currentUserName.value = document.getString("name") ?: "User"
             }
             .addOnFailureListener {
-                // Handle the error, maybe set a default name
                 _currentUserName.value = "User"
             }
     }
@@ -85,7 +76,6 @@ class AuthViewModel : ViewModel() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // --- CHANGE 2: After login, check for verification again ---
                     checkAuthState()
                 } else {
                     _authState.value =
@@ -105,10 +95,8 @@ class AuthViewModel : ViewModel() {
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val user = auth.currentUser
-                    // --- CHANGE 3: Send the verification email ---
                     user?.sendEmailVerification()?.addOnCompleteListener { verificationTask ->
                         if(verificationTask.isSuccessful) {
-                            // --- CHANGE 4: Create the user profile, but move to NeedsVerification state ---
                             createUserProfile(user, name)
                         } else {
                             _authState.value = AuthState.Error("Failed to send verification email.")
@@ -123,26 +111,21 @@ class AuthViewModel : ViewModel() {
 
     fun reloadUserAndCheckVerification() {
         _authState.value = AuthState.Loading
-        // First, reload the user data from Firebase
         auth.currentUser?.reload()?.addOnCompleteListener {
-            // After reloading, check the auth state again
             checkAuthState()
         }
     }
-
-    // --- CHANGE 5: Helper function to create the user profile ---
     private fun createUserProfile(user: FirebaseUser, name: String) {
         val uid = user.uid
         val newUser = User(
             id = uid,
             name = name,
-            avatarUrl = "https://placehold.co/100", // Default avatar
+            avatarUrl = "https://placehold.co/100",
             role = "user"
         )
 
         db.collection("users").document(uid).set(newUser)
             .addOnSuccessListener {
-                // Profile saved, now tell the UI to show the "verify email" message
                 _authState.value = AuthState.NeedsVerification
             }
             .addOnFailureListener { e ->
@@ -150,19 +133,15 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    // --- 2. Add a function to explicitly enter guest mode ---
     fun enterGuestMode() {
         _authState.value = AuthState.Guest
     }
 
-
-    // --- Update your signout function to remove the token ---
     fun signout() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            // Remove the FCM token so the user no longer receives notifications
             db.collection("users").document(currentUser.uid)
-                .update("fcmToken", null) // Or FieldValue.delete()
+                .update("fcmToken", null)
         }
         auth.signOut()
         _authState.value = AuthState.Guest
@@ -173,7 +152,6 @@ class AuthViewModel : ViewModel() {
 sealed class AuthState {
     object Authenticated : AuthState()
     object Unauthenticated : AuthState()
-    // --- CHANGE 6: Add a new state for users who need to verify their email ---
     object NeedsVerification : AuthState()
     object Loading : AuthState()
     object Guest : AuthState()

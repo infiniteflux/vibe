@@ -24,7 +24,6 @@ import com.infiniteflux.login_using_firebase.viewmodel.AuthState
 
 @Composable
 fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel) {
-    // --- 1. Add state for the user's name ---
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -62,7 +61,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), // Adjusted padding for better consistency
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -71,11 +70,10 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel) {
                 fontSize = 24.sp,
                 style = TextStyle(fontWeight = FontWeight.Bold),
                 modifier = Modifier
-                    .padding(bottom = 24.dp) // Increased bottom padding
+                    .padding(bottom = 24.dp)
                     .align(Alignment.Start)
             )
 
-            // --- 3. Add a TextField for the user's name ---
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -105,10 +103,9 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel) {
 
             Button(
                 onClick = {
-                    // --- 4. Call the updated signup function with the name ---
                     authViewModel.signup(name, email, password)
                 },
-                modifier = Modifier.fillMaxWidth() // Make button wider
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Sign Up", textAlign = TextAlign.Center)
             }

@@ -10,7 +10,7 @@ data class Report(
     val reason: String = "",
     @ServerTimestamp
     val timestamp: Timestamp? = null,
-    val verified: Boolean = false // Field for admins to verify a report
+    val verified: Boolean = false
 )
 
 data class ConnectionForReport(

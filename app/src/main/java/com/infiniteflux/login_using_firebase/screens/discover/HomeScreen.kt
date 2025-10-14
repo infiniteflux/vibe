@@ -42,9 +42,6 @@ fun HomeScreen(
     val eventsCount by viewModel.eventsCount.collectAsState()
     val trendingEvents by viewModel.trendingEvents.collectAsState()
     val connectionCount by connectionViewModel.connectionCount.collectAsState()
-
-
-    // --- 2. Observe the user's role and add state for the dialog ---
     val userRole by authViewModel.userRole.observeAsState("user")
     var showPermissionDeniedDialog by remember { mutableStateOf(false) }
 
@@ -65,7 +62,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
             TrendingEventsSection(navController = navController, trendingEvents = trendingEvents)
             Spacer(modifier = Modifier.height(24.dp))
-            // --- 3. Pass the role and dialog trigger to the QuickActionsSection ---
+
             QuickActionsSection(
                 navController = navController,
                 userRole = userRole,
@@ -77,7 +74,6 @@ fun HomeScreen(
         }
     }
 
-    // --- 4. Add the permission denied dialog ---
     if (showPermissionDeniedDialog) {
         AlertDialog(
             onDismissRequest = { showPermissionDeniedDialog = false },
@@ -235,7 +231,6 @@ fun TrendingEventCard(event: Event) {
     }
 }
 
-// --- 5. Update the QuickActionsSection function signature ---
 @Composable
 fun QuickActionsSection(
     navController: NavController,
@@ -252,7 +247,6 @@ fun QuickActionsSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround
         ) {
-            // --- 6. Update the onClick logic for the "Create Event" card ---
             QuickActionCard(
                 onClickAction = {
                     if (userRole == "creator") {

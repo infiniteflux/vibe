@@ -48,7 +48,6 @@ class HomeViewModel : ViewModel() {
         fetchJoinedEventsForCount()
     }
 
-    // --- THE FIX: This function is now only responsible for the user's name ---
     private fun fetchUserData() {
         userDataListener?.remove()
         if (currentUserId != null) {

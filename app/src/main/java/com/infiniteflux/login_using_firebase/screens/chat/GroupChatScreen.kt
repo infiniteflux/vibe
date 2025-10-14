@@ -68,7 +68,6 @@ fun GroupChatScreen(
 
     val messages by viewModel.messages.collectAsState()
     val currentUserId = viewModel.currentUserId
-    // --- 1. Get the current user's name from the AuthViewModel ---
     val senderName by authViewModel.currentUserName.observeAsState("You")
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -94,7 +93,6 @@ fun GroupChatScreen(
                 value = messageText,
                 onValueChange = { messageText = it },
                 onSendClick = {
-                    // --- 2. Use the dynamic senderName when sending a message ---
                     viewModel.sendMessage(groupId, messageText, senderName)
                     messageText = ""
                     keyboardController?.hide()
@@ -158,7 +156,6 @@ fun MessageBubble(message: Message, isFromCurrentUser: Boolean) {
                     text = message.text,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                // --- 3. ADD THE TIMESTAMP TO THE MESSAGE BUBBLE ---
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = formatTimestamp(message.timestamp),
@@ -206,8 +203,6 @@ fun MessageInput(value: String, onValueChange: (String) -> Unit, onSendClick: ()
         }
     }
 }
-
-// --- 4. INCLUDE THE HELPER FUNCTION (can be moved to a separate file later) ---
 @Composable
 private fun formatTimestamp(timestamp: Timestamp?): String {
     if (timestamp == null) return ""

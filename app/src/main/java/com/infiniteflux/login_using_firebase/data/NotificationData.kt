@@ -10,6 +10,6 @@ data class AppNotification(
     val title: String = "",
     val body: String = "",
     val timestamp: Timestamp? = null,
-    val type: String = "", // e.g., 'private_message', 'group_message', 'new_connection'
-    val relatedId: String = "" // e.g., chatId, eventId, connectionId
+    val type: String = "",
+    val relatedId: String = ""
 )
