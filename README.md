@@ -7,7 +7,7 @@ The app is powered by a robust Firebase backend, providing real-time data synchr
 
 You can download the latest version of the Vibe app directly from our repository:
 
-* **[Download Vibe APK (Latest Version)](./apk/vibe.apk)**
+* **[Download Vibe APK (Latest Version)](https://github.com/infiniteflux/vibe/raw/master/app/apk/vibe.apk)**
 
 ---
 
