@@ -34,7 +34,7 @@ fun VerificationScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "A verification link has been sent to your email address. Please check your inbox and click the link to activate your account.",
+            "A verification link has been sent to your email address. Please check your inbox ( spam section inside email) and click the link to activate your account.",
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
