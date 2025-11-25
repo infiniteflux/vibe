@@ -1,7 +1,5 @@
 package com.infiniteflux.login_using_firebase.data
 
-import com.google.firebase.Timestamp
-import com.google.firebase.firestore.ServerTimestamp
 import com.infiniteflux.login_using_firebase.viewmodel.WarningLevel
 
 data class ReportedUser(
