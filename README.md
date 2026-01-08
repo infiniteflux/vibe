@@ -1,105 +1,354 @@
-Vibe - Social Event & Connection App
-Vibe is a modern, real-time social application built with Kotlin and Jetpack Compose. It allows users to discover and join local events, connect with other attendees through a unique post-event rating system, and engage in both group and private one-on-one chats.
-The app is powered by a robust Firebase backend, providing real-time data synchronization, authentication, push notifications, and scalable storage for user-generated content.
+<p align="center">
+  <img src="./app/src/main/ic_launcher-playstore.png" alt="Vibe Logo" width="150" height="150">
+</p>
 
----
-## Download
+<h1 align="center">Vibe</h1>
+<p align="center">
+  <strong>Connect. Discover. Experience.</strong>
+</p>
 
-You can download the latest version of the Vibe app directly from our repository:
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
+  <img src="https://img.shields.io/badge/Backend-Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
+</p>
 
-* **[Download Vibe APK (Latest Version)](https://github.com/infiniteflux/vibe/raw/master/app/apk/vibe.apk)**
-
----
-
-Architecture Diagram
-The application follows a modern client-server architecture using Firebase as the backend-as-a-service (BaaS) platform. The diagram below illustrates the flow of data and interactions between the client, backend services, and automated functions.
-
-![Application Architecture Diagram](./app/img/diagram.png)
-
-The diagram shows the Android app's UI and ViewModels interacting with Firebase services. Firebase triggers Cloud Functions for backend logic, which in turn use services like FCM to send push notifications back to the app.
-
----
-## Key Features
-
-### Dynamic Guest & Authenticated Mode
-Users can browse events without an account. Protected actions (joining events, chatting) trigger a login prompt.
-
-### Secure User Authentication
-Full sign-up, login, and email verification flow.
-
-### Real-time Event System
-* Creators can dynamically create events with image uploads.
-* Users can view and join upcoming events.
-* A "Trending Events" section on the home screen automatically shows the most popular upcoming events.
-
-### Post-Event Connection System
-* After an event ends, attendees can rate each other.
-* Mutual "Spark" ratings automatically create a connection between users.
-* A dedicated "My Connections" screen lists all successful matches.
-
-### Real-time Chat
-* **Group Chat:** Users can create and participate in group conversations.
-* **Private 1-on-1 Chat:** Connected users can start private chats.
-* **Live Updates:** Features unread message indicators and last message previews, all updated in real-time.
-
-### Role-Based Access Control
-* Users can be assigned "user" or "creator" roles.
-* Features like creating events and adding members to groups are restricted to creators.
-
-### Community Moderation
-* A full user reporting system.
-* A "Wall of Shame" to display users who have been banned by an admin.
-
-### Push Notifications
-* Real-time alerts for new messages, new connections, and new events.
-* A fully functional in-app notification center to view past notifications.
-
-### Automated Backend Logic
-Cloud Functions automatically manage event join counts, data cleanup when events are deleted, and the sending of all push notifications.
+<p align="center">
+  <img src="https://img.shields.io/badge/Min%20SDK-28-green?style=flat-square" alt="Min SDK" />
+  <img src="https://img.shields.io/badge/Target%20SDK-35-blue?style=flat-square" alt="Target SDK" />
+  <img src="https://img.shields.io/badge/Version-1.0-orange?style=flat-square" alt="Version" />
+</p>
 
 ---
 
-## Technology Stack
+## 📥 Download
+
+Get the latest version of Vibe directly:
+
+<p align="center">
+  <a href="https://github.com/infiniteflux/vibe/raw/master/app/apk/vibe.apk">
+    <img src="https://img.shields.io/badge/Download%20APK-Latest%20Version-00C853?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+</p>
+
+---
+
+## 📖 Overview
+
+**Vibe** is a modern, real-time social event discovery and connection platform built with cutting-edge Android technologies. The app enables users to:
+
+- 🎉 **Discover** local events happening around them
+- 🤝 **Connect** with like-minded attendees through a unique post-event rating system  
+- 💬 **Communicate** through real-time group and private messaging
+- 🔔 **Stay Updated** with push notifications for new events, connections, and messages
+
+---
+
+## 🏗️ Architecture
+
+Vibe follows the **MVVM (Model-View-ViewModel)** architectural pattern with a clean separation of concerns, leveraging Firebase as a Backend-as-a-Service (BaaS) platform.
+
+### Architecture Diagram
+
+<p align="center">
+  <img src="./app/img/diagram.png" alt="Architecture Diagram" width="800">
+</p>
+
+### Component Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              ANDROID APPLICATION                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         UI LAYER (Jetpack Compose)                   │   │
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────────┐│   │
+│  │  │  Login  │ │  Home   │ │  Chat   │ │ Events  │ │ Profile/Settings││   │
+│  │  │ Screens │ │ Screen  │ │ Screens │ │ Screens │ │     Screens     ││   │
+│  │  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────────┬────────┘│   │
+│  └───────┼──────────▼──────────┼──────────┼──────────────────┼─────────┘   │
+│          │                      │          │                  │             │
+│  ┌───────▼──────────────────────▼──────────▼──────────────────▼─────────┐   │
+│  │                         VIEWMODEL LAYER                              │   │
+│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────────┐ ┌──────────┐ │   │
+│  │  │  Auth    │ │  Home    │ │  Chat    │ │  Events    │ │ Profile  │ │   │
+│  │  │ViewModel │ │ViewModel │ │ViewModel │ │ ViewModel  │ │ViewModel │ │   │
+│  │  └──────────┘ └──────────┘ └──────────┘ └────────────┘ └──────────┘ │   │
+│  │  ┌────────────┐ ┌──────────────┐ ┌─────────────┐ ┌────────────────┐ │   │
+│  │  │ Connection │ │ Notification │ │   Report    │ │  WallOfShame   │ │   │
+│  │  │  ViewModel │ │  ViewModel   │ │  ViewModel  │ │   ViewModel    │ │   │
+│  │  └────────────┘ └──────────────┘ └─────────────┘ └────────────────┘ │   │
+│  └───────────────────────────────┬──────────────────────────────────────┘   │
+│                                  │                                          │
+│  ┌───────────────────────────────▼──────────────────────────────────────┐   │
+│  │                           DATA LAYER                                 │   │
+│  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐            │   │
+│  │  │ ChatData  │ │ EventData │ │Connection │ │ Report &  │            │   │
+│  │  │  Models   │ │  Models   │ │   Data    │ │Shame Data │            │   │
+│  │  └───────────┘ └───────────┘ └───────────┘ └───────────┘            │   │
+│  └───────────────────────────────┬──────────────────────────────────────┘   │
+└──────────────────────────────────┼──────────────────────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            FIREBASE SERVICES                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐│
+│  │   Firebase  │  │  Firestore  │  │   Cloud     │  │  Cloud Functions    ││
+│  │    Auth     │  │  Database   │  │   Storage   │  │  (Node.js Backend)  ││
+│  │             │  │             │  │             │  │                     ││
+│  │ • Email/    │  │ • Users     │  │ • Profile   │  │ • onNewMessage      ││
+│  │   Password  │  │ • Events    │  │   Images    │  │ • onNewConnection   ││
+│  │ • Email     │  │ • Chats     │  │ • Event     │  │ • onEventCreate     ││
+│  │   Verify    │  │ • Groups    │  │   Images    │  │ • onEventDelete     ││
+│  │             │  │ • Reports   │  │             │  │ • updateJoinCount   ││
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘│
+│         │                │                │                     │          │
+│         └────────────────┴────────────────┴─────────────────────┘          │
+│                                   │                                         │
+│                                   ▼                                         │
+│                     ┌─────────────────────────────┐                        │
+│                     │  Firebase Cloud Messaging   │                        │
+│                     │          (FCM)              │                        │
+│                     │                             │                        │
+│                     │  • New Message Alerts       │                        │
+│                     │  • Connection Notifications │                        │
+│                     │  • Event Updates            │                        │
+│                     └─────────────────────────────┘                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+User Action → Screen (Composable) → ViewModel → Firebase Service → Real-time Update → UI
+```
+
+---
+
+## 📁 Project Structure
+
+```
+app/
+├── src/main/
+│   ├── java/com/infiniteflux/login_using_firebase/
+│   │   ├── MainActivity.kt           # Entry point & navigation host
+│   │   ├── MyApplication.kt          # Application class with Firebase init
+│   │   │
+│   │   ├── cloud/                     # Firebase Cloud Services
+│   │   │   └── MyFirebaseMessagingService.kt
+│   │   │
+│   │   ├── data/                      # Data Models
+│   │   │   ├── ChatData.kt
+│   │   │   ├── ConnectionData.kt
+│   │   │   ├── EventsData.kt
+│   │   │   ├── HomeData.kt
+│   │   │   ├── NotificationData.kt
+│   │   │   ├── ReportData.kt
+│   │   │   └── WallOfShameData.kt
+│   │   │
+│   │   ├── navcontroller/             # Navigation Setup
+│   │   │   └── NavController.kt
+│   │   │
+│   │   ├── screens/                   # UI Screens (Composables)
+│   │   │   ├── login/                 # Auth Screens
+│   │   │   ├── discover/              # Discovery Screens
+│   │   │   ├── event/                 # Event Management
+│   │   │   ├── chat/                  # Messaging Screens
+│   │   │   ├── profile/               # User Profile
+│   │   │   └── Notification/          # Notification Center
+│   │   │
+│   │   ├── viewmodel/                 # ViewModels (Business Logic)
+│   │   │   ├── AuthViewModel.kt
+│   │   │   ├── ChatViewModel.kt
+│   │   │   ├── ConnectionViewModel.kt
+│   │   │   ├── EventsViewModel.kt
+│   │   │   ├── HomeViewModel.kt
+│   │   │   ├── NotificationViewModel.kt
+│   │   │   ├── ProfileViewModel.kt
+│   │   │   ├── ReportViewModel.kt
+│   │   │   └── WallOfShameViewModel.kt
+│   │   │
+│   │   ├── sharedComponents/          # Reusable UI Components
+│   │   └── ui/                        # Theme & Styling
+│   │
+│   └── res/                           # Android Resources
+│
+├── apk/
+│   └── vibe.apk                       # Production APK
+│
+└── img/
+    └── diagram.png                    # Architecture Diagram
+```
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication System
+| Feature | Description |
+|---------|-------------|
+| **Guest Mode** | Browse events without account creation |
+| **Email/Password Auth** | Secure sign-up and login flow |
+| **Email Verification** | Verify user email for account activation |
+| **Protected Actions** | Seamless login prompts for authenticated features |
+
+### 🎪 Event Management
+| Feature | Description |
+|---------|-------------|
+| **Create Events** | Creators can publish events with images |
+| **Join Events** | One-tap event registration |
+| **Trending Section** | Auto-curated popular upcoming events |
+| **Real-time Updates** | Live attendee count and event status |
+
+### 🌟 Post-Event Connection System
+| Feature | Description |
+|---------|-------------|
+| **Rate Attendees** | Rate other attendees after event ends |
+| **"Spark" Matching** | Mutual high ratings create connections |
+| **My Connections** | View all successful matches |
+
+### 💬 Real-time Messaging
+| Feature | Description |
+|---------|-------------|
+| **Group Chats** | Create and join group conversations |
+| **Private 1-on-1** | Direct messaging with connections |
+| **Live Updates** | Real-time message sync with unread indicators |
+| **Last Message Preview** | Quick glance at recent messages |
+
+### 👥 Role-Based Access
+| Role | Capabilities |
+|------|-------------|
+| **User** | Browse, join events, chat, rate attendees |
+| **Creator** | All user features + create events, manage groups |
+| **Admin** | Full moderation capabilities |
+
+### 🛡️ Community Moderation
+- **Report System**: Flag inappropriate users
+- **Wall of Shame**: Display banned users
+- **Admin Controls**: Manage community standards
+
+### 🔔 Push Notifications
+- New message alerts
+- Connection notifications
+- Event reminders and updates
+- In-app notification center
+
+---
+
+## 🛠️ Technology Stack
 
 ### Frontend
-* **Kotlin:** The primary programming language.
-* **Jetpack Compose:** For building the entire declarative UI.
-* **Compose Navigation:** For handling all in-app navigation and state management.
-* **Coil:** For asynchronous image loading.
+| Technology | Purpose |
+|------------|---------|
+| **Kotlin** | Primary programming language |
+| **Jetpack Compose** | Modern declarative UI framework |
+| **Compose Navigation** | Type-safe navigation management |
+| **Material 3** | Design system implementation |
+| **Coil** | Efficient image loading |
+| **LiveData** | Reactive data observation |
 
 ### Backend (Firebase)
-* **Firebase Authentication:** For user management and security.
-* **Firestore Database:** As the real-time, NoSQL database for all app data.
-* **Firebase Cloud Storage:** For storing user-uploaded images.
-* **Cloud Functions for Firebase:** For all server-side logic and automation.
-* **Firebase Cloud Messaging (FCM):** For handling push notifications.
+| Service | Purpose |
+|---------|---------|
+| **Firebase Auth** | User authentication & management |
+| **Cloud Firestore** | Real-time NoSQL database |
+| **Cloud Storage** | Image & media storage |
+| **Cloud Functions** | Serverless backend logic |
+| **Cloud Messaging (FCM)** | Push notification delivery |
+
+### Cloud Functions (Backend Logic)
+```javascript
+// Automated triggers for:
+onNewMessage()       // Send push notification on new messages
+onNewConnection()    // Notify users of new connections
+onEventCreate()      // Alert followers of new events
+onEventDelete()      // Clean up event-related data
+updateJoinCount()    // Maintain accurate attendee counts
+```
 
 ---
 
-## Setup & Configuration
+## ⚙️ Setup & Configuration
 
-To run this project, you will need to:
+### Prerequisites
+- Android Studio Arctic Fox or later
+- JDK 11+
+- Firebase account
+- Node.js (for Cloud Functions deployment)
 
-### 1. Set up a Firebase Project
-* Create a new project in the [Firebase Console](https://console.firebase.google.com/).
-* Add an Android app to the project with the package name `com.infiniteflux.login_using_firebase`.
-* Download the `google-services.json` file and place it in the `app/` directory of the Android project.
-* Add your debug and release SHA-1 keys to the project settings in Firebase.
+### 1. Clone Repository
+```bash
+git clone https://github.com/infiniteflux/vibe.git
+cd vibe
+```
 
-### 2. Enable Firebase Services
-* In the Firebase Console, enable **Authentication** (with the Email/Password provider).
-* Enable **Firestore Database**.
-* Enable **Firebase Storage**.
+### 2. Firebase Setup
+1. Create a new project in [Firebase Console](https://console.firebase.google.com/)
+2. Add Android app with package name: `com.infiniteflux.login_using_firebase`
+3. Download `google-services.json` → place in `app/` directory
+4. Add SHA-1/SHA-256 fingerprints for your debug & release keys
 
-### 3. Deploy Cloud Functions
-* Install [Node.js](https://nodejs.org/en/download/) and the [Firebase CLI](https://firebase.google.com/docs/cli).
-* Navigate to the `functions` directory in your terminal (assuming your functions are in a `functions` folder within your project).
-* Run `npm install` to install dependencies.
-* Run `firebase deploy --only functions` to deploy the backend logic.
+### 3. Enable Firebase Services
+```
+✓ Authentication (Email/Password provider)
+✓ Cloud Firestore
+✓ Cloud Storage
+✓ Cloud Messaging
+```
 
-### 4. Create Firestore Indexes
-* Run the app and navigate to the `HomeScreen` and `RateAttendeesScreen`.
-* Check the Android Studio Logcat for error messages containing links to create the required Firestore indexes.
-* Click these links and save the indexes in the Firebase Console.
+### 4. Deploy Cloud Functions
+```bash
+cd functions
+npm install
+firebase login
+firebase deploy --only functions
+```
 
+### 5. Create Firestore Indexes
+Run the app and check Logcat for index creation links, then create required composite indexes through Firebase Console.
 
+### 6. Build & Run
+```bash
+./gradlew assembleDebug
+# or use Android Studio Run button
+```
+
+---
+
+## 📋 Requirements
+
+| Requirement | Specification |
+|-------------|---------------|
+| **Minimum SDK** | API 28 (Android 9.0) |
+| **Target SDK** | API 35 (Android 15) |
+| **Compile SDK** | 35 |
+| **JVM Target** | Java 11 |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+---
+
+<p align="center">
+  Built with ❤️ using Kotlin & Jetpack Compose
+</p>
+<p align="center">
+  <strong>Vibe</strong> — Where Events Meet Connections
+</p>
